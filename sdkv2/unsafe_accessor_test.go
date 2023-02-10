@@ -18,6 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+//go:generate go run github.com/golang/mock/mockgen@latest -destination=../mock/github.com/aws/aws-sdk-go-v2/credentials/stscreds/stscreds.go -package=mock_stscreds github.com/aws/aws-sdk-go-v2/credentials/stscreds AssumeRoleAPIClient
+
 package credscache
 
 import (
@@ -26,7 +28,10 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+
+	mock "github.com/Aton-Kish/aws-credscache-go/mock/github.com/aws/aws-sdk-go-v2/credentials/stscreds"
 )
 
 func TestNewCredentialsCacheUnsafeAccessor(t *testing.T) {
@@ -188,6 +193,11 @@ func TestNewAssumeRoleProviderUnsafeAccessor(t *testing.T) {
 }
 
 func Test_assumeRoleProviderUnsafeAccessor_Options(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockAssumeRoleAPIClient := mock.NewMockAssumeRoleAPIClient(ctrl)
+
 	type expected struct {
 		res stscreds.AssumeRoleOptions
 	}
@@ -198,7 +208,30 @@ func Test_assumeRoleProviderUnsafeAccessor_Options(t *testing.T) {
 		expected expected
 	}{
 		{
-			name:     "positive case: get option",
+			name:     "positive case: get basic option",
+			accessor: &assumeRoleProviderUnsafeAccessor{ptr: stscreds.NewAssumeRoleProvider(mockAssumeRoleAPIClient, "role_arn")},
+			expected: expected{
+				res: stscreds.AssumeRoleOptions{
+					Client:  mockAssumeRoleAPIClient,
+					RoleARN: "role_arn",
+				},
+			},
+		},
+		{
+			name: "positive case: get option with role session name",
+			accessor: &assumeRoleProviderUnsafeAccessor{ptr: stscreds.NewAssumeRoleProvider(mockAssumeRoleAPIClient, "role_arn", func(o *stscreds.AssumeRoleOptions) {
+				o.RoleSessionName = "role_session_name"
+			})},
+			expected: expected{
+				res: stscreds.AssumeRoleOptions{
+					Client:          mockAssumeRoleAPIClient,
+					RoleARN:         "role_arn",
+					RoleSessionName: "role_session_name",
+				},
+			},
+		},
+		{
+			name:     "positive case: get empty option",
 			accessor: &assumeRoleProviderUnsafeAccessor{ptr: &stscreds.AssumeRoleProvider{}},
 			expected: expected{
 				res: stscreds.AssumeRoleOptions{},
