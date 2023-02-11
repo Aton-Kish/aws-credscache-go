@@ -21,47 +21,18 @@
 package credscache
 
 import (
-	"fmt"
-
 	"github.com/Aton-Kish/aws-credscache-go/credscacheutil"
 	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
 )
 
-type AssumeRoleCacheKeyGenerator struct {
-	credscacheutil.AssumeRoleCacheKeyGenerator
-}
-
-var _ interface {
-	fmt.Stringer
-	credscacheutil.CacheKeyer
-	FromSTSCredsAssumeRoleOptions(options *stscreds.AssumeRoleOptions)
-	ToSTSCredsAssumeRoleOptions() *stscreds.AssumeRoleOptions
-} = &AssumeRoleCacheKeyGenerator{}
-
-func NewAssumeRoleCacheKeyGenerator() *AssumeRoleCacheKeyGenerator {
-	return new(AssumeRoleCacheKeyGenerator)
-}
-
-func NewAssumeRoleCacheKeyGeneratorFromSTSCredsAssumeRoleOptions(options *stscreds.AssumeRoleOptions) *AssumeRoleCacheKeyGenerator {
-	g := NewAssumeRoleCacheKeyGenerator()
-	g.FromSTSCredsAssumeRoleOptions(options)
-	return g
-}
-
-func (g *AssumeRoleCacheKeyGenerator) FromSTSCredsAssumeRoleOptions(options *stscreds.AssumeRoleOptions) {
-	g.RoleARN = options.RoleARN
-	g.RoleSessionName = options.RoleSessionName
-	g.ExternalID = options.ExternalID
-	g.SerialNumber = options.SerialNumber
-	g.Duration = options.Duration
-}
-
-func (g *AssumeRoleCacheKeyGenerator) ToSTSCredsAssumeRoleOptions() *stscreds.AssumeRoleOptions {
-	return &stscreds.AssumeRoleOptions{
-		RoleARN:         g.RoleARN,
-		RoleSessionName: g.RoleSessionName,
-		ExternalID:      g.ExternalID,
-		SerialNumber:    g.SerialNumber,
-		Duration:        g.Duration,
+func AssumeRoleCacheKey(options *stscreds.AssumeRoleOptions) (string, error) {
+	g := &credscacheutil.AssumeRoleCacheKeyGenerator{
+		RoleARN:         options.RoleARN,
+		RoleSessionName: options.RoleSessionName,
+		ExternalID:      options.ExternalID,
+		SerialNumber:    options.SerialNumber,
+		Duration:        options.Duration,
 	}
+
+	return g.CacheKey()
 }

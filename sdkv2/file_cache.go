@@ -25,41 +25,36 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 )
 
-type FileCache struct {
-	credscacheutil.FileCache
-}
-
-var _ interface {
-	credscacheutil.Loader
-	credscacheutil.Storer
-	FromAWSCredentials(creds *aws.Credentials)
-	ToAWSCredentials(source string) *aws.Credentials
-} = &FileCache{}
-
-func NewFileCache() *FileCache {
-	return new(FileCache)
-}
-
-func NewFileCacheFromAWSCredentials(creds *aws.Credentials) *FileCache {
-	c := NewFileCache()
-	c.FromAWSCredentials(creds)
-	return c
-}
-
-func (c *FileCache) FromAWSCredentials(creds *aws.Credentials) {
-	c.Credentials.AccessKeyID = creds.AccessKeyID
-	c.Credentials.SecretAccessKey = creds.SecretAccessKey
-	c.Credentials.SessionToken = creds.SessionToken
-	c.Credentials.Expires = creds.Expires
-}
-
-func (c *FileCache) ToAWSCredentials(source string) *aws.Credentials {
-	return &aws.Credentials{
-		AccessKeyID:     c.Credentials.AccessKeyID,
-		SecretAccessKey: c.Credentials.SecretAccessKey,
-		SessionToken:    c.Credentials.SessionToken,
-		Source:          source,
-		CanExpire:       true,
-		Expires:         c.Credentials.Expires,
+func LoadCredentials(path string) (*aws.Credentials, error) {
+	cache := new(credscacheutil.FileCache)
+	if err := cache.Load(path); err != nil {
+		return nil, err
 	}
+
+	creds := &aws.Credentials{
+		AccessKeyID:     cache.Credentials.AccessKeyID,
+		SecretAccessKey: cache.Credentials.SecretAccessKey,
+		SessionToken:    cache.Credentials.SessionToken,
+		CanExpire:       true,
+		Expires:         cache.Credentials.Expires,
+	}
+
+	return creds, nil
+}
+
+func StoreCredentials(path string, creds *aws.Credentials) error {
+	cache := &credscacheutil.FileCache{
+		Credentials: credscacheutil.CachedCredentials{
+			AccessKeyID:     creds.AccessKeyID,
+			SecretAccessKey: creds.SecretAccessKey,
+			SessionToken:    creds.SessionToken,
+			Expires:         creds.Expires,
+		},
+	}
+
+	if err := cache.Store(path); err != nil {
+		return err
+	}
+
+	return nil
 }
