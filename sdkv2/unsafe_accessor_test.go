@@ -35,35 +35,45 @@ import (
 )
 
 func TestNewCredentialsCacheUnsafeAccessor(t *testing.T) {
+	type args struct {
+		credsCache *aws.CredentialsCache
+	}
+
 	type expected struct {
 		res CredentialsCacheUnsafeAccessor
 		err error
 	}
 
 	tests := []struct {
-		name       string
-		credsCache *aws.CredentialsCache
-		expected   expected
+		name     string
+		args     args
+		expected expected
 	}{
 		{
-			name:       "positive case: CredentialsCache with valid provider",
-			credsCache: aws.NewCredentialsCache(&stscreds.AssumeRoleProvider{}),
+			name: "positive case: CredentialsCache with valid provider",
+			args: args{
+				credsCache: aws.NewCredentialsCache(&stscreds.AssumeRoleProvider{}),
+			},
 			expected: expected{
 				res: &credentialsCacheUnsafeAccessor{ptr: aws.NewCredentialsCache(&stscreds.AssumeRoleProvider{})},
 				err: nil,
 			},
 		},
 		{
-			name:       "positive case: CredentialsCache with nil provider",
-			credsCache: aws.NewCredentialsCache(nil),
+			name: "positive case: CredentialsCache with nil provider",
+			args: args{
+				credsCache: aws.NewCredentialsCache(nil),
+			},
 			expected: expected{
 				res: &credentialsCacheUnsafeAccessor{ptr: aws.NewCredentialsCache(nil)},
 				err: nil,
 			},
 		},
 		{
-			name:       "negative case: nil CredentialsCache",
-			credsCache: nil,
+			name: "negative case: nil CredentialsCache",
+			args: args{
+				credsCache: nil,
+			},
 			expected: expected{
 				res: nil,
 				err: ErrNilPointer,
@@ -73,7 +83,7 @@ func TestNewCredentialsCacheUnsafeAccessor(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual, err := NewCredentialsCacheUnsafeAccessor(tt.credsCache)
+			actual, err := NewCredentialsCacheUnsafeAccessor(tt.args.credsCache)
 
 			if tt.expected.err == nil {
 				assert.NoError(t, err)
@@ -149,6 +159,10 @@ func Test_credentialsCacheUnsafeAccessor_SetProvider(t *testing.T) {
 }
 
 func TestNewAssumeRoleProviderUnsafeAccessor(t *testing.T) {
+	type args struct {
+		provider *stscreds.AssumeRoleProvider
+	}
+
 	type expected struct {
 		res AssumeRoleProviderUnsafeAccessor
 		err error
@@ -156,20 +170,24 @@ func TestNewAssumeRoleProviderUnsafeAccessor(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		provider *stscreds.AssumeRoleProvider
+		args     args
 		expected expected
 	}{
 		{
-			name:     "positive case: AssumeRoleProvider",
-			provider: &stscreds.AssumeRoleProvider{},
+			name: "positive case: AssumeRoleProvider",
+			args: args{
+				provider: &stscreds.AssumeRoleProvider{},
+			},
 			expected: expected{
 				res: &assumeRoleProviderUnsafeAccessor{ptr: &stscreds.AssumeRoleProvider{}},
 				err: nil,
 			},
 		},
 		{
-			name:     "negative case: nil AssumeRoleProvider",
-			provider: nil,
+			name: "negative case: nil AssumeRoleProvider",
+			args: args{
+				provider: nil,
+			},
 			expected: expected{
 				res: nil,
 				err: ErrNilPointer,
@@ -179,7 +197,7 @@ func TestNewAssumeRoleProviderUnsafeAccessor(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual, err := NewAssumeRoleProviderUnsafeAccessor(tt.provider)
+			actual, err := NewAssumeRoleProviderUnsafeAccessor(tt.args.provider)
 
 			if tt.expected.err == nil {
 				assert.NoError(t, err)

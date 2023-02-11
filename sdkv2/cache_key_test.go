@@ -28,6 +28,10 @@ import (
 )
 
 func TestAssumeRoleCacheKey(t *testing.T) {
+	type args struct {
+		options *stscreds.AssumeRoleOptions
+	}
+
 	type expected struct {
 		res string
 		err error
@@ -35,13 +39,15 @@ func TestAssumeRoleCacheKey(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		options  *stscreds.AssumeRoleOptions
+		args     args
 		expected expected
 	}{
 		{
 			name: "positive case: with RoleARN",
-			options: &stscreds.AssumeRoleOptions{
-				RoleARN: "role_arn",
+			args: args{
+				options: &stscreds.AssumeRoleOptions{
+					RoleARN: "role_arn",
+				},
 			},
 			expected: expected{
 				res: "de1969e7a880d858c9bef3ba110acf78869d4527",
@@ -52,7 +58,7 @@ func TestAssumeRoleCacheKey(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual, err := AssumeRoleCacheKey(tt.options)
+			actual, err := AssumeRoleCacheKey(tt.args.options)
 
 			if tt.expected.err == nil {
 				assert.NoError(t, err)
