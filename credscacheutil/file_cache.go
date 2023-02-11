@@ -23,7 +23,10 @@ package credscacheutil
 import (
 	"encoding/json"
 	"os"
+	"path/filepath"
 	"time"
+
+	"github.com/Aton-Kish/aws-credscache-go/internal/xfilepath"
 )
 
 type Loader interface {
@@ -70,6 +73,13 @@ func (c *FileCache) Store(path string) error {
 	data, err := json.Marshal(c)
 	if err != nil {
 		return err
+	}
+
+	dir := filepath.Dir(path)
+	if !xfilepath.Exists(dir) {
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return err
+		}
 	}
 
 	if err := os.WriteFile(path, data, 0600); err != nil {
