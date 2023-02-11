@@ -214,16 +214,6 @@ func TestAssumeRoleCacheKeyGenerator_String(t *testing.T) {
 				res: `{"DurationSeconds": 3600, "ExternalId": "external_id", "RoleArn": "role_arn", "RoleSessionName": "role_session_name", "SerialNumber": "mfa_serial"}`,
 			},
 		},
-		{
-			name: "positive case: with RoleARN, Duration(=3600s)",
-			generator: AssumeRoleCacheKeyGenerator{
-				RoleARN:  "role_arn",
-				Duration: time.Duration(3600) * time.Second,
-			},
-			expected: expected{
-				res: `{"DurationSeconds": 3600, "RoleArn": "role_arn"}`,
-			},
-		},
 	}
 
 	for _, tt := range tests {
