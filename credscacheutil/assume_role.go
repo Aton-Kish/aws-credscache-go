@@ -43,29 +43,29 @@ var _ interface {
 } = &AssumeRoleCacheKeyGenerator{}
 
 func (g AssumeRoleCacheKeyGenerator) String() string {
-	opts := []string{}
+	o := []string{}
 
-	opts = append(opts, fmt.Sprintf(`"RoleArn": "%s"`, g.RoleARN))
+	o = append(o, fmt.Sprintf(`"RoleArn": "%s"`, g.RoleARN))
 
 	if g.RoleSessionName != "" {
-		opts = append(opts, fmt.Sprintf(`"RoleSessionName": "%s"`, g.RoleSessionName))
+		o = append(o, fmt.Sprintf(`"RoleSessionName": "%s"`, g.RoleSessionName))
 	}
 
 	if g.ExternalID != nil {
-		opts = append(opts, fmt.Sprintf(`"ExternalId": "%s"`, *g.ExternalID))
+		o = append(o, fmt.Sprintf(`"ExternalId": "%s"`, *g.ExternalID))
 	}
 
 	if g.SerialNumber != nil {
-		opts = append(opts, fmt.Sprintf(`"SerialNumber": "%s"`, *g.SerialNumber))
+		o = append(o, fmt.Sprintf(`"SerialNumber": "%s"`, *g.SerialNumber))
 	}
 
 	if g.Duration != 0 {
-		opts = append(opts, fmt.Sprintf(`"DurationSeconds": %d`, int(g.Duration.Seconds())))
+		o = append(o, fmt.Sprintf(`"DurationSeconds": %d`, int(g.Duration.Seconds())))
 	}
 
-	sort.Slice(opts, func(i, j int) bool { return opts[i] < opts[j] })
+	sort.Slice(o, func(i, j int) bool { return o[i] < o[j] })
 
-	return fmt.Sprintf("{%s}", strings.Join(opts, ", "))
+	return fmt.Sprintf("{%s}", strings.Join(o, ", "))
 }
 
 func (g *AssumeRoleCacheKeyGenerator) CacheKey() (string, error) {
