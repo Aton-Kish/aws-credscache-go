@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package cachekey
+package credscacheutil
 
 type cachekey interface {
 	CacheKey() (string, error)
