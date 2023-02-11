@@ -21,5 +21,5 @@
 package cachekey
 
 type cachekey interface {
-	CacheKey() string
+	CacheKey() (string, error)
 }

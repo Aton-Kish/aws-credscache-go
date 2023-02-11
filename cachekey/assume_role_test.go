@@ -238,6 +238,7 @@ func TestAssumeRoleOptions_String(t *testing.T) {
 func TestAssumeRoleOptions_CacheKey(t *testing.T) {
 	type expected struct {
 		res string
+		err error
 	}
 
 	tests := []struct {
@@ -252,6 +253,7 @@ func TestAssumeRoleOptions_CacheKey(t *testing.T) {
 			},
 			expected: expected{
 				res: "de1969e7a880d858c9bef3ba110acf78869d4527",
+				err: nil,
 			},
 		},
 		{
@@ -262,6 +264,7 @@ func TestAssumeRoleOptions_CacheKey(t *testing.T) {
 			},
 			expected: expected{
 				res: "0c4a0c26056d87adcb5be96d428ab967ceb2daef",
+				err: nil,
 			},
 		},
 		{
@@ -272,6 +275,7 @@ func TestAssumeRoleOptions_CacheKey(t *testing.T) {
 			},
 			expected: expected{
 				res: "542f374592ab812af01e95f77d5b3a3ff52aac10",
+				err: nil,
 			},
 		},
 		{
@@ -282,6 +286,7 @@ func TestAssumeRoleOptions_CacheKey(t *testing.T) {
 			},
 			expected: expected{
 				res: "3b5ffe7e787c6aca89ff03530dc3c413d3af1611",
+				err: nil,
 			},
 		},
 		{
@@ -292,6 +297,7 @@ func TestAssumeRoleOptions_CacheKey(t *testing.T) {
 			},
 			expected: expected{
 				res: "191aa88b0bb6e3b4f1a2d40d88eb9f22c2fc8fa4",
+				err: nil,
 			},
 		},
 		{
@@ -303,6 +309,7 @@ func TestAssumeRoleOptions_CacheKey(t *testing.T) {
 			},
 			expected: expected{
 				res: "71eca3af61a2ca310d4de2243f6e9b3f243dd4f7",
+				err: nil,
 			},
 		},
 		{
@@ -314,6 +321,7 @@ func TestAssumeRoleOptions_CacheKey(t *testing.T) {
 			},
 			expected: expected{
 				res: "cda918cacd9e1d1c71d510d187e90c5817e04b97",
+				err: nil,
 			},
 		},
 		{
@@ -325,6 +333,7 @@ func TestAssumeRoleOptions_CacheKey(t *testing.T) {
 			},
 			expected: expected{
 				res: "d4c06aa9a54967371823e504843d43af217bd80a",
+				err: nil,
 			},
 		},
 		{
@@ -336,6 +345,7 @@ func TestAssumeRoleOptions_CacheKey(t *testing.T) {
 			},
 			expected: expected{
 				res: "c10285ba7a3c3718ff67fe7cedc11dff9b1f9373",
+				err: nil,
 			},
 		},
 		{
@@ -347,6 +357,7 @@ func TestAssumeRoleOptions_CacheKey(t *testing.T) {
 			},
 			expected: expected{
 				res: "c4d752519e46952275e7f7975a4b8f6c70165853",
+				err: nil,
 			},
 		},
 		{
@@ -358,6 +369,7 @@ func TestAssumeRoleOptions_CacheKey(t *testing.T) {
 			},
 			expected: expected{
 				res: "38b73eece8246fa77d02085b7ac27289afd1cfc6",
+				err: nil,
 			},
 		},
 		{
@@ -370,6 +382,7 @@ func TestAssumeRoleOptions_CacheKey(t *testing.T) {
 			},
 			expected: expected{
 				res: "696d8943794ca230409bccc0c6e4158934275eed",
+				err: nil,
 			},
 		},
 		{
@@ -382,6 +395,7 @@ func TestAssumeRoleOptions_CacheKey(t *testing.T) {
 			},
 			expected: expected{
 				res: "98d5d14fdb662800ed57cf48cd4f3c2ec9ff46a0",
+				err: nil,
 			},
 		},
 		{
@@ -394,6 +408,7 @@ func TestAssumeRoleOptions_CacheKey(t *testing.T) {
 			},
 			expected: expected{
 				res: "4af18d294c15620b13617e9a7f44a793a0b65e50",
+				err: nil,
 			},
 		},
 		{
@@ -406,6 +421,7 @@ func TestAssumeRoleOptions_CacheKey(t *testing.T) {
 			},
 			expected: expected{
 				res: "9f707334eb3cc733e2f264fc7d39d4fb0b2b04f1",
+				err: nil,
 			},
 		},
 		{
@@ -419,15 +435,22 @@ func TestAssumeRoleOptions_CacheKey(t *testing.T) {
 			},
 			expected: expected{
 				res: "9460fb8eea6805c12dbd1c9f1426735b38fc5fb4",
+				err: nil,
 			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual := tt.options.CacheKey()
+			actual, err := tt.options.CacheKey()
 
-			assert.Equal(t, tt.expected.res, actual)
+			if tt.expected.err == nil {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expected.res, actual)
+			} else {
+				assert.Error(t, err)
+				assert.Equal(t, tt.expected.err, err)
+			}
 		})
 	}
 }

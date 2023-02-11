@@ -22,6 +22,7 @@ package cachekey
 
 import (
 	"crypto/sha1"
+	"encoding/hex"
 	"fmt"
 	"sort"
 	"strings"
@@ -67,10 +68,13 @@ func (o AssumeRoleOptions) String() string {
 	return fmt.Sprintf("{%s}", strings.Join(opts, ", "))
 }
 
-func (o *AssumeRoleOptions) CacheKey() string {
-	h := sha1.New()
-	h.Write([]byte(o.String()))
-	bs := h.Sum(nil)
+func (o *AssumeRoleOptions) CacheKey() (string, error) {
+	hash := sha1.New()
+	if _, err := hash.Write([]byte(o.String())); err != nil {
+		return "", err
+	}
 
-	return fmt.Sprintf("%x", bs)
+	key := strings.ToLower(hex.EncodeToString(hash.Sum(nil)))
+
+	return key, nil
 }
