@@ -39,7 +39,7 @@ type AssumeRoleOptions struct {
 
 var _ interface {
 	fmt.Stringer
-	cachekey
+	CacheKeyer
 } = &AssumeRoleOptions{}
 
 func (o AssumeRoleOptions) String() string {

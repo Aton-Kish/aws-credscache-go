@@ -20,6 +20,6 @@
 
 package credscacheutil
 
-type cachekey interface {
+type CacheKeyer interface {
 	CacheKey() (string, error)
 }
