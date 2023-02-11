@@ -29,7 +29,7 @@ import (
 	"time"
 )
 
-type AssumeRoleOptions struct {
+type AssumeRoleCacheKeyGenerator struct {
 	RoleARN         string
 	RoleSessionName string
 	ExternalID      *string
@@ -40,27 +40,27 @@ type AssumeRoleOptions struct {
 var _ interface {
 	fmt.Stringer
 	CacheKeyer
-} = &AssumeRoleOptions{}
+} = &AssumeRoleCacheKeyGenerator{}
 
-func (o AssumeRoleOptions) String() string {
+func (g AssumeRoleCacheKeyGenerator) String() string {
 	opts := []string{}
 
-	opts = append(opts, fmt.Sprintf(`"RoleArn": "%s"`, o.RoleARN))
+	opts = append(opts, fmt.Sprintf(`"RoleArn": "%s"`, g.RoleARN))
 
-	if o.RoleSessionName != "" {
-		opts = append(opts, fmt.Sprintf(`"RoleSessionName": "%s"`, o.RoleSessionName))
+	if g.RoleSessionName != "" {
+		opts = append(opts, fmt.Sprintf(`"RoleSessionName": "%s"`, g.RoleSessionName))
 	}
 
-	if o.ExternalID != nil {
-		opts = append(opts, fmt.Sprintf(`"ExternalId": "%s"`, *o.ExternalID))
+	if g.ExternalID != nil {
+		opts = append(opts, fmt.Sprintf(`"ExternalId": "%s"`, *g.ExternalID))
 	}
 
-	if o.SerialNumber != nil {
-		opts = append(opts, fmt.Sprintf(`"SerialNumber": "%s"`, *o.SerialNumber))
+	if g.SerialNumber != nil {
+		opts = append(opts, fmt.Sprintf(`"SerialNumber": "%s"`, *g.SerialNumber))
 	}
 
-	if o.Duration != 0 {
-		opts = append(opts, fmt.Sprintf(`"DurationSeconds": %d`, int(o.Duration.Seconds())))
+	if g.Duration != 0 {
+		opts = append(opts, fmt.Sprintf(`"DurationSeconds": %d`, int(g.Duration.Seconds())))
 	}
 
 	sort.Slice(opts, func(i, j int) bool { return opts[i] < opts[j] })
@@ -68,9 +68,9 @@ func (o AssumeRoleOptions) String() string {
 	return fmt.Sprintf("{%s}", strings.Join(opts, ", "))
 }
 
-func (o *AssumeRoleOptions) CacheKey() (string, error) {
+func (g *AssumeRoleCacheKeyGenerator) CacheKey() (string, error) {
 	hash := sha1.New()
-	if _, err := hash.Write([]byte(o.String())); err != nil {
+	if _, err := hash.Write([]byte(g.String())); err != nil {
 		return "", err
 	}
 

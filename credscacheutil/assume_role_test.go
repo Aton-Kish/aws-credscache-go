@@ -28,19 +28,19 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestAssumeRoleOptions_String(t *testing.T) {
+func TestAssumeRoleCacheKeyGenerator_String(t *testing.T) {
 	type expected struct {
 		res string
 	}
 
 	tests := []struct {
-		name     string
-		options  AssumeRoleOptions
-		expected expected
+		name      string
+		generator AssumeRoleCacheKeyGenerator
+		expected  expected
 	}{
 		{
 			name: "positive case: with RoleARN",
-			options: AssumeRoleOptions{
+			generator: AssumeRoleCacheKeyGenerator{
 				RoleARN: "role_arn",
 			},
 			expected: expected{
@@ -49,7 +49,7 @@ func TestAssumeRoleOptions_String(t *testing.T) {
 		},
 		{
 			name: "positive case: with RoleARN, RoleSessionName",
-			options: AssumeRoleOptions{
+			generator: AssumeRoleCacheKeyGenerator{
 				RoleARN:         "role_arn",
 				RoleSessionName: "role_session_name",
 			},
@@ -59,7 +59,7 @@ func TestAssumeRoleOptions_String(t *testing.T) {
 		},
 		{
 			name: "positive case: with RoleARN, ExternalID",
-			options: AssumeRoleOptions{
+			generator: AssumeRoleCacheKeyGenerator{
 				RoleARN:    "role_arn",
 				ExternalID: aws.String("external_id"),
 			},
@@ -69,7 +69,7 @@ func TestAssumeRoleOptions_String(t *testing.T) {
 		},
 		{
 			name: "positive case: with RoleARN, SerialNumber",
-			options: AssumeRoleOptions{
+			generator: AssumeRoleCacheKeyGenerator{
 				RoleARN:      "role_arn",
 				SerialNumber: aws.String("mfa_serial"),
 			},
@@ -79,7 +79,7 @@ func TestAssumeRoleOptions_String(t *testing.T) {
 		},
 		{
 			name: "positive case: with RoleARN, Duration(=3600s)",
-			options: AssumeRoleOptions{
+			generator: AssumeRoleCacheKeyGenerator{
 				RoleARN:  "role_arn",
 				Duration: time.Duration(3600) * time.Second,
 			},
@@ -89,7 +89,7 @@ func TestAssumeRoleOptions_String(t *testing.T) {
 		},
 		{
 			name: "positive case: with RoleARN, RoleSessionName, ExternalID",
-			options: AssumeRoleOptions{
+			generator: AssumeRoleCacheKeyGenerator{
 				RoleARN:         "role_arn",
 				RoleSessionName: "role_session_name",
 				ExternalID:      aws.String("external_id"),
@@ -100,7 +100,7 @@ func TestAssumeRoleOptions_String(t *testing.T) {
 		},
 		{
 			name: "positive case: with RoleARN, RoleSessionName, SerialNumber",
-			options: AssumeRoleOptions{
+			generator: AssumeRoleCacheKeyGenerator{
 				RoleARN:         "role_arn",
 				RoleSessionName: "role_session_name",
 				SerialNumber:    aws.String("mfa_serial"),
@@ -111,7 +111,7 @@ func TestAssumeRoleOptions_String(t *testing.T) {
 		},
 		{
 			name: "positive case: with RoleARN, RoleSessionName, Duration(=3600s)",
-			options: AssumeRoleOptions{
+			generator: AssumeRoleCacheKeyGenerator{
 				RoleARN:         "role_arn",
 				RoleSessionName: "role_session_name",
 				Duration:        time.Duration(3600) * time.Second,
@@ -122,7 +122,7 @@ func TestAssumeRoleOptions_String(t *testing.T) {
 		},
 		{
 			name: "positive case: with RoleARN, ExternalID, SerialNumber",
-			options: AssumeRoleOptions{
+			generator: AssumeRoleCacheKeyGenerator{
 				RoleARN:      "role_arn",
 				ExternalID:   aws.String("external_id"),
 				SerialNumber: aws.String("mfa_serial"),
@@ -133,7 +133,7 @@ func TestAssumeRoleOptions_String(t *testing.T) {
 		},
 		{
 			name: "positive case: with RoleARN, ExternalID, Duration(=3600s)",
-			options: AssumeRoleOptions{
+			generator: AssumeRoleCacheKeyGenerator{
 				RoleARN:    "role_arn",
 				ExternalID: aws.String("external_id"),
 				Duration:   time.Duration(3600) * time.Second,
@@ -144,7 +144,7 @@ func TestAssumeRoleOptions_String(t *testing.T) {
 		},
 		{
 			name: "positive case: with RoleARN, SerialNumber, Duration(=3600s)",
-			options: AssumeRoleOptions{
+			generator: AssumeRoleCacheKeyGenerator{
 				RoleARN:      "role_arn",
 				SerialNumber: aws.String("mfa_serial"),
 				Duration:     time.Duration(3600) * time.Second,
@@ -155,7 +155,7 @@ func TestAssumeRoleOptions_String(t *testing.T) {
 		},
 		{
 			name: "positive case: with RoleARN, RoleSessionName, ExternalID, SerialNumber",
-			options: AssumeRoleOptions{
+			generator: AssumeRoleCacheKeyGenerator{
 				RoleARN:         "role_arn",
 				RoleSessionName: "role_session_name",
 				ExternalID:      aws.String("external_id"),
@@ -167,7 +167,7 @@ func TestAssumeRoleOptions_String(t *testing.T) {
 		},
 		{
 			name: "positive case: with RoleARN, RoleSessionName, ExternalID, Duration(=3600s)",
-			options: AssumeRoleOptions{
+			generator: AssumeRoleCacheKeyGenerator{
 				RoleARN:         "role_arn",
 				RoleSessionName: "role_session_name",
 				ExternalID:      aws.String("external_id"),
@@ -179,7 +179,7 @@ func TestAssumeRoleOptions_String(t *testing.T) {
 		},
 		{
 			name: "positive case: with RoleARN, RoleSessionName, SerialNumber, Duration(=3600s)",
-			options: AssumeRoleOptions{
+			generator: AssumeRoleCacheKeyGenerator{
 				RoleARN:         "role_arn",
 				RoleSessionName: "role_session_name",
 				SerialNumber:    aws.String("mfa_serial"),
@@ -191,7 +191,7 @@ func TestAssumeRoleOptions_String(t *testing.T) {
 		},
 		{
 			name: "positive case: with RoleARN, ExternalID, SerialNumber, Duration(=3600s)",
-			options: AssumeRoleOptions{
+			generator: AssumeRoleCacheKeyGenerator{
 				RoleARN:      "role_arn",
 				ExternalID:   aws.String("external_id"),
 				SerialNumber: aws.String("mfa_serial"),
@@ -203,7 +203,7 @@ func TestAssumeRoleOptions_String(t *testing.T) {
 		},
 		{
 			name: "positive case: with RoleARN, RoleSessionName, ExternalID, SerialNumber, Duration(=3600s)",
-			options: AssumeRoleOptions{
+			generator: AssumeRoleCacheKeyGenerator{
 				RoleARN:         "role_arn",
 				RoleSessionName: "role_session_name",
 				ExternalID:      aws.String("external_id"),
@@ -216,7 +216,7 @@ func TestAssumeRoleOptions_String(t *testing.T) {
 		},
 		{
 			name: "positive case: with RoleARN, Duration(=3600s)",
-			options: AssumeRoleOptions{
+			generator: AssumeRoleCacheKeyGenerator{
 				RoleARN:  "role_arn",
 				Duration: time.Duration(3600) * time.Second,
 			},
@@ -228,27 +228,27 @@ func TestAssumeRoleOptions_String(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual := tt.options.String()
+			actual := tt.generator.String()
 
 			assert.Equal(t, tt.expected.res, actual)
 		})
 	}
 }
 
-func TestAssumeRoleOptions_CacheKey(t *testing.T) {
+func TestAssumeRoleCacheKeyGenerator_CacheKey(t *testing.T) {
 	type expected struct {
 		res string
 		err error
 	}
 
 	tests := []struct {
-		name     string
-		options  AssumeRoleOptions
-		expected expected
+		name      string
+		generator AssumeRoleCacheKeyGenerator
+		expected  expected
 	}{
 		{
 			name: "positive case: with RoleARN",
-			options: AssumeRoleOptions{
+			generator: AssumeRoleCacheKeyGenerator{
 				RoleARN: "role_arn",
 			},
 			expected: expected{
@@ -258,7 +258,7 @@ func TestAssumeRoleOptions_CacheKey(t *testing.T) {
 		},
 		{
 			name: "positive case: with RoleARN, RoleSessionName",
-			options: AssumeRoleOptions{
+			generator: AssumeRoleCacheKeyGenerator{
 				RoleARN:         "role_arn",
 				RoleSessionName: "role_session_name",
 			},
@@ -269,7 +269,7 @@ func TestAssumeRoleOptions_CacheKey(t *testing.T) {
 		},
 		{
 			name: "positive case: with RoleARN, ExternalID",
-			options: AssumeRoleOptions{
+			generator: AssumeRoleCacheKeyGenerator{
 				RoleARN:    "role_arn",
 				ExternalID: aws.String("external_id"),
 			},
@@ -280,7 +280,7 @@ func TestAssumeRoleOptions_CacheKey(t *testing.T) {
 		},
 		{
 			name: "positive case: with RoleARN, SerialNumber",
-			options: AssumeRoleOptions{
+			generator: AssumeRoleCacheKeyGenerator{
 				RoleARN:      "role_arn",
 				SerialNumber: aws.String("mfa_serial"),
 			},
@@ -291,7 +291,7 @@ func TestAssumeRoleOptions_CacheKey(t *testing.T) {
 		},
 		{
 			name: "positive case: with RoleARN, Duration(=3600s)",
-			options: AssumeRoleOptions{
+			generator: AssumeRoleCacheKeyGenerator{
 				RoleARN:  "role_arn",
 				Duration: time.Duration(3600) * time.Second,
 			},
@@ -302,7 +302,7 @@ func TestAssumeRoleOptions_CacheKey(t *testing.T) {
 		},
 		{
 			name: "positive case: with RoleARN, RoleSessionName, ExternalID",
-			options: AssumeRoleOptions{
+			generator: AssumeRoleCacheKeyGenerator{
 				RoleARN:         "role_arn",
 				RoleSessionName: "role_session_name",
 				ExternalID:      aws.String("external_id"),
@@ -314,7 +314,7 @@ func TestAssumeRoleOptions_CacheKey(t *testing.T) {
 		},
 		{
 			name: "positive case: with RoleARN, RoleSessionName, SerialNumber",
-			options: AssumeRoleOptions{
+			generator: AssumeRoleCacheKeyGenerator{
 				RoleARN:         "role_arn",
 				RoleSessionName: "role_session_name",
 				SerialNumber:    aws.String("mfa_serial"),
@@ -326,7 +326,7 @@ func TestAssumeRoleOptions_CacheKey(t *testing.T) {
 		},
 		{
 			name: "positive case: with RoleARN, RoleSessionName, Duration(=3600s)",
-			options: AssumeRoleOptions{
+			generator: AssumeRoleCacheKeyGenerator{
 				RoleARN:         "role_arn",
 				RoleSessionName: "role_session_name",
 				Duration:        time.Duration(3600) * time.Second,
@@ -338,7 +338,7 @@ func TestAssumeRoleOptions_CacheKey(t *testing.T) {
 		},
 		{
 			name: "positive case: with RoleARN, ExternalID, SerialNumber",
-			options: AssumeRoleOptions{
+			generator: AssumeRoleCacheKeyGenerator{
 				RoleARN:      "role_arn",
 				ExternalID:   aws.String("external_id"),
 				SerialNumber: aws.String("mfa_serial"),
@@ -350,7 +350,7 @@ func TestAssumeRoleOptions_CacheKey(t *testing.T) {
 		},
 		{
 			name: "positive case: with RoleARN, ExternalID, Duration(=3600s)",
-			options: AssumeRoleOptions{
+			generator: AssumeRoleCacheKeyGenerator{
 				RoleARN:    "role_arn",
 				ExternalID: aws.String("external_id"),
 				Duration:   time.Duration(3600) * time.Second,
@@ -362,7 +362,7 @@ func TestAssumeRoleOptions_CacheKey(t *testing.T) {
 		},
 		{
 			name: "positive case: with RoleARN, SerialNumber, Duration(=3600s)",
-			options: AssumeRoleOptions{
+			generator: AssumeRoleCacheKeyGenerator{
 				RoleARN:      "role_arn",
 				SerialNumber: aws.String("mfa_serial"),
 				Duration:     time.Duration(3600) * time.Second,
@@ -374,7 +374,7 @@ func TestAssumeRoleOptions_CacheKey(t *testing.T) {
 		},
 		{
 			name: "positive case: with RoleARN, RoleSessionName, ExternalID, SerialNumber",
-			options: AssumeRoleOptions{
+			generator: AssumeRoleCacheKeyGenerator{
 				RoleARN:         "role_arn",
 				RoleSessionName: "role_session_name",
 				ExternalID:      aws.String("external_id"),
@@ -387,7 +387,7 @@ func TestAssumeRoleOptions_CacheKey(t *testing.T) {
 		},
 		{
 			name: "positive case: with RoleARN, RoleSessionName, ExternalID, Duration(=3600s)",
-			options: AssumeRoleOptions{
+			generator: AssumeRoleCacheKeyGenerator{
 				RoleARN:         "role_arn",
 				RoleSessionName: "role_session_name",
 				ExternalID:      aws.String("external_id"),
@@ -400,7 +400,7 @@ func TestAssumeRoleOptions_CacheKey(t *testing.T) {
 		},
 		{
 			name: "positive case: with RoleARN, RoleSessionName, SerialNumber, Duration(=3600s)",
-			options: AssumeRoleOptions{
+			generator: AssumeRoleCacheKeyGenerator{
 				RoleARN:         "role_arn",
 				RoleSessionName: "role_session_name",
 				SerialNumber:    aws.String("mfa_serial"),
@@ -413,7 +413,7 @@ func TestAssumeRoleOptions_CacheKey(t *testing.T) {
 		},
 		{
 			name: "positive case: with RoleARN, ExternalID, SerialNumber, Duration(=3600s)",
-			options: AssumeRoleOptions{
+			generator: AssumeRoleCacheKeyGenerator{
 				RoleARN:      "role_arn",
 				ExternalID:   aws.String("external_id"),
 				SerialNumber: aws.String("mfa_serial"),
@@ -426,7 +426,7 @@ func TestAssumeRoleOptions_CacheKey(t *testing.T) {
 		},
 		{
 			name: "positive case: with RoleARN, RoleSessionName, ExternalID, SerialNumber, Duration(=3600s)",
-			options: AssumeRoleOptions{
+			generator: AssumeRoleCacheKeyGenerator{
 				RoleARN:         "role_arn",
 				RoleSessionName: "role_session_name",
 				ExternalID:      aws.String("external_id"),
@@ -442,7 +442,7 @@ func TestAssumeRoleOptions_CacheKey(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual, err := tt.options.CacheKey()
+			actual, err := tt.generator.CacheKey()
 
 			if tt.expected.err == nil {
 				assert.NoError(t, err)
