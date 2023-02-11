@@ -18,63 +18,48 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package credscacheutil
+package credscache
 
 import (
-	"encoding/json"
-	"os"
-	"time"
+	"github.com/Aton-Kish/aws-credscache-go/credscacheutil"
+	"github.com/aws/aws-sdk-go-v2/aws"
 )
 
-type Loader interface {
-	Load(path string) error
-}
-
-type Storer interface {
-	Store(path string) error
-}
-
 type FileCache struct {
-	Credentials CachedCredentials `json:"Credentials"`
-}
-
-type CachedCredentials struct {
-	AccessKeyID     string    `json:"AccessKeyId"`
-	SecretAccessKey string    `json:"SecretAccessKey"`
-	SessionToken    string    `json:"SessionToken"`
-	Expires         time.Time `json:"Expiration"`
+	credscacheutil.FileCache
 }
 
 var _ interface {
-	Loader
-	Storer
+	credscacheutil.Loader
+	credscacheutil.Storer
+	FromAWSCredentials(creds *aws.Credentials)
+	ToAWSCredentials(source string) *aws.Credentials
 } = &FileCache{}
 
-func (c *FileCache) Load(path string) error {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return err
-	}
-
-	cache := new(FileCache)
-	if err := json.Unmarshal(data, cache); err != nil {
-		return err
-	}
-
-	*c = *cache
-
-	return nil
+func NewFileCache() *FileCache {
+	return new(FileCache)
 }
 
-func (c *FileCache) Store(path string) error {
-	data, err := json.Marshal(c)
-	if err != nil {
-		return err
-	}
+func NewFileCacheFromAWSCredentials(creds *aws.Credentials) *FileCache {
+	c := NewFileCache()
+	c.FromAWSCredentials(creds)
+	return c
+}
 
-	if err := os.WriteFile(path, data, 0600); err != nil {
-		return err
-	}
+func (c *FileCache) FromAWSCredentials(creds *aws.Credentials) {
+	c.Credentials.AccessKeyID = creds.AccessKeyID
+	c.Credentials.SecretAccessKey = creds.SecretAccessKey
+	c.Credentials.SessionToken = creds.SessionToken
+	c.Credentials.Expires = creds.Expires
+}
 
-	return nil
+func (c *FileCache) ToAWSCredentials(source string) *aws.Credentials {
+	return &aws.Credentials{
+		AccessKeyID:     c.Credentials.AccessKeyID,
+		SecretAccessKey: c.Credentials.SecretAccessKey,
+		SessionToken:    c.Credentials.SessionToken,
+		Source:          source,
+		CanExpire:       true,
+		Expires:         c.Credentials.Expires,
+	}
 }
