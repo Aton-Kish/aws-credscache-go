@@ -21,16 +21,11 @@
 package credscache
 
 import (
-	"errors"
 	"reflect"
 	"unsafe"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
-)
-
-var (
-	ErrNilPointer = errors.New("nil pointer")
 )
 
 type CredentialsCacheUnsafeAccessor interface {

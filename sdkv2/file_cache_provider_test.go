@@ -136,7 +136,7 @@ func TestFileCacheProvider_RetrieveCachedCredentials(t *testing.T) {
 				assert.Equal(t, tt.expected.res, actual)
 			} else {
 				assert.Error(t, err)
-				assert.Equal(t, tt.expected.err, err)
+				assert.ErrorIs(t, err, tt.expected.err)
 			}
 		})
 	}
@@ -153,6 +153,8 @@ func TestFileCacheProvider_RetrieveExpiredCredentials(t *testing.T) {
 		CanExpire:       true,
 		Expires:         expired15MinutesAgo,
 	}
+
+	errRetrieveFailure := errors.New("failed to retrieve")
 
 	type fields struct {
 		cacheKey string
@@ -223,11 +225,11 @@ func TestFileCacheProvider_RetrieveExpiredCredentials(t *testing.T) {
 			},
 			mockCredentialsProviderRetrieve: mockCredentialsProviderRetrieve{
 				res: aws.Credentials{Source: "TestProvider"},
-				err: errors.New("failed to retrieve"),
+				err: errRetrieveFailure,
 			},
 			expected: expected{
 				res: aws.Credentials{Source: "FileCacheProvider"},
-				err: errors.New("failed to retrieve"),
+				err: errRetrieveFailure,
 			},
 		},
 	}
@@ -261,7 +263,7 @@ func TestFileCacheProvider_RetrieveExpiredCredentials(t *testing.T) {
 				assert.Equal(t, tt.expected.res, actual)
 			} else {
 				assert.Error(t, err)
-				assert.Equal(t, tt.expected.err, err)
+				assert.ErrorIs(t, err, tt.expected.err)
 			}
 		})
 	}
@@ -269,6 +271,8 @@ func TestFileCacheProvider_RetrieveExpiredCredentials(t *testing.T) {
 
 func TestFileCacheProvider_RetrieveNonCachedCredentials(t *testing.T) {
 	expiresIn15Minutes := time.Now().UTC().Add(time.Duration(15) * time.Minute)
+
+	errRetrieveFailure := errors.New("failed to retrieve")
 
 	type fields struct {
 		cacheKey string
@@ -339,11 +343,11 @@ func TestFileCacheProvider_RetrieveNonCachedCredentials(t *testing.T) {
 			},
 			mockCredentialsProviderRetrieve: mockCredentialsProviderRetrieve{
 				res: aws.Credentials{Source: "TestProvider"},
-				err: errors.New("failed to retrieve"),
+				err: errRetrieveFailure,
 			},
 			expected: expected{
 				res: aws.Credentials{Source: "FileCacheProvider"},
-				err: errors.New("failed to retrieve"),
+				err: errRetrieveFailure,
 			},
 		},
 	}
@@ -376,7 +380,7 @@ func TestFileCacheProvider_RetrieveNonCachedCredentials(t *testing.T) {
 				assert.Equal(t, tt.expected.res, actual)
 			} else {
 				assert.Error(t, err)
-				assert.Equal(t, tt.expected.err, err)
+				assert.ErrorIs(t, err, tt.expected.err)
 			}
 		})
 	}

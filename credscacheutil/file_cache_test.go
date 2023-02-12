@@ -21,7 +21,6 @@
 package credscacheutil
 
 import (
-	"os"
 	"path/filepath"
 	"syscall"
 	"testing"
@@ -83,7 +82,7 @@ func TestFileCache_Load(t *testing.T) {
 			},
 			expected: expected{
 				cache: nil,
-				err:   &os.PathError{Op: "open", Path: filepath.Join(tempDir, "non-existing.json"), Err: syscall.Errno(2)},
+				err:   syscall.Errno(2),
 			},
 		},
 	}
@@ -97,7 +96,7 @@ func TestFileCache_Load(t *testing.T) {
 				assert.Equal(t, tt.expected.cache, tt.cache)
 			} else {
 				assert.Error(t, err)
-				assert.Equal(t, tt.expected.err, err)
+				assert.ErrorIs(t, err, tt.expected.err)
 			}
 		})
 	}
@@ -162,7 +161,7 @@ func TestFileCache_Store(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Equal(t, tt.expected.err, err)
+				assert.ErrorIs(t, err, tt.expected.err)
 			}
 		})
 	}

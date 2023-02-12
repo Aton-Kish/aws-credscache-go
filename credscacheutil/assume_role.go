@@ -71,6 +71,7 @@ func (g AssumeRoleCacheKeyGenerator) String() string {
 func (g *AssumeRoleCacheKeyGenerator) CacheKey() (string, error) {
 	hash := sha1.New()
 	if _, err := hash.Write([]byte(g.String())); err != nil {
+		err = fmt.Errorf("failed to write hash, %w", err)
 		return "", err
 	}
 

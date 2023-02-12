@@ -75,6 +75,7 @@ func (p *FileCacheProvider) Retrieve(ctx context.Context) (aws.Credentials, erro
 	if xfilepath.Exists(path) {
 		creds, err := LoadCredentials(path)
 		if err != nil {
+			err = &FileCacheProviderError{Err: err}
 			return aws.Credentials{Source: FileCacheProviderName}, err
 		}
 		creds.Source = FileCacheProviderName
@@ -86,12 +87,14 @@ func (p *FileCacheProvider) Retrieve(ctx context.Context) (aws.Credentials, erro
 
 	creds, err := p.provider.Retrieve(ctx)
 	if err != nil {
+		err = &FileCacheProviderError{Err: err}
 		return aws.Credentials{Source: FileCacheProviderName}, err
 	}
 	creds.Source = FileCacheProviderName
 
 	if creds.CanExpire {
 		if err := StoreCredentials(path, &creds); err != nil {
+			err = &FileCacheProviderError{Err: err}
 			return aws.Credentials{Source: FileCacheProviderName}, err
 		}
 	}

@@ -439,7 +439,7 @@ func TestAssumeRoleCacheKeyGenerator_CacheKey(t *testing.T) {
 				assert.Equal(t, tt.expected.res, actual)
 			} else {
 				assert.Error(t, err)
-				assert.Equal(t, tt.expected.err, err)
+				assert.ErrorIs(t, err, tt.expected.err)
 			}
 		})
 	}

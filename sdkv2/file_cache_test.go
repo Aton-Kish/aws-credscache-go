@@ -21,7 +21,6 @@
 package credscache
 
 import (
-	"os"
 	"path/filepath"
 	"syscall"
 	"testing"
@@ -81,7 +80,7 @@ func TestLoadCredentials(t *testing.T) {
 			},
 			expected: expected{
 				res: nil,
-				err: &os.PathError{Op: "open", Path: filepath.Join(tempDir, "non-existing.json"), Err: syscall.Errno(2)},
+				err: syscall.Errno(2),
 			},
 		},
 	}
@@ -95,7 +94,7 @@ func TestLoadCredentials(t *testing.T) {
 				assert.Equal(t, tt.expected.res, actual)
 			} else {
 				assert.Error(t, err)
-				assert.Equal(t, tt.expected.err, err)
+				assert.ErrorIs(t, err, tt.expected.err)
 			}
 		})
 	}
@@ -160,7 +159,7 @@ func TestStoreCredentials(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Equal(t, tt.expected.err, err)
+				assert.ErrorIs(t, err, tt.expected.err)
 			}
 		})
 	}

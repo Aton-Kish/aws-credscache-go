@@ -22,6 +22,7 @@ package credscacheutil
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"time"
@@ -56,11 +57,13 @@ var _ interface {
 func (c *FileCache) Load(path string) error {
 	data, err := os.ReadFile(path)
 	if err != nil {
+		err = fmt.Errorf("failed to read cache file, %w", err)
 		return err
 	}
 
 	cache := new(FileCache)
 	if err := json.Unmarshal(data, cache); err != nil {
+		err = fmt.Errorf("failed to decode cache json, %w", err)
 		return err
 	}
 
@@ -72,17 +75,20 @@ func (c *FileCache) Load(path string) error {
 func (c *FileCache) Store(path string) error {
 	data, err := json.Marshal(c)
 	if err != nil {
+		err = fmt.Errorf("failed to encode cache json, %w", err)
 		return err
 	}
 
 	dir := filepath.Dir(path)
 	if !xfilepath.Exists(dir) {
 		if err := os.MkdirAll(dir, 0755); err != nil {
+			err = fmt.Errorf("failed to make directories, %w", err)
 			return err
 		}
 	}
 
 	if err := os.WriteFile(path, data, 0600); err != nil {
+		err = fmt.Errorf("failed to write cache file, %w", err)
 		return err
 	}
 
