@@ -27,7 +27,6 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
-	"reflect"
 	"testing"
 	"time"
 
@@ -37,70 +36,16 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestFileCacheProvider_Retrieve(t *testing.T) {
-	type fields struct {
-		provider aws.CredentialsProvider
-		cacheKey string
-		options  FileCacheOptions
+func TestFileCacheProvider_RetrieveCachedCredentials(t *testing.T) {
+	expiresIn15Minutes := time.Now().UTC().Add(time.Duration(15) * time.Minute)
+	cachedCreds := &aws.Credentials{
+		AccessKeyID:     "CachedAccessKeyID",
+		SecretAccessKey: "CachedSecretAccessKey",
+		SessionToken:    "CachedSessionToken",
+		Source:          "TestProvider",
+		CanExpire:       true,
+		Expires:         expiresIn15Minutes,
 	}
-
-	type args struct {
-		ctx context.Context
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    aws.Credentials
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			p := &FileCacheProvider{
-				provider: tt.fields.provider,
-				cacheKey: tt.fields.cacheKey,
-				options:  tt.fields.options,
-			}
-			got, err := p.Retrieve(tt.args.ctx)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("FileCacheProvider.Retrieve() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("FileCacheProvider.Retrieve() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestFileCacheProvider(t *testing.T) {
-	cachedDir := t.TempDir()
-	cachedCacheKey := "cached"
-	cachedExpires := time.Now().UTC().Add(time.Duration(24) * time.Hour)
-	assert.NoError(t, StoreCredentials(
-		filepath.Join(cachedDir, fmt.Sprintf("%s.json", cachedCacheKey)),
-		&aws.Credentials{
-			AccessKeyID:     "CachedAccessKeyID",
-			SecretAccessKey: "SecretAccessKey",
-			SessionToken:    "SessionToken",
-			Source:          "TestProvider",
-			CanExpire:       true,
-			Expires:         cachedExpires,
-		}))
-
-	expiredCacheKey := "expired"
-	assert.NoError(t, StoreCredentials(
-		filepath.Join(cachedDir, fmt.Sprintf("%s.json", expiredCacheKey)),
-		&aws.Credentials{
-			AccessKeyID:     "ExpiredAccessKeyID",
-			SecretAccessKey: "SecretAccessKey",
-			SessionToken:    "SessionToken",
-			Source:          "TestProvider",
-			CanExpire:       true,
-			Expires:         time.Date(2006, 1, 2, 15, 4, 5, 0, time.UTC),
-		}))
 
 	type fields struct {
 		cacheKey string
@@ -129,109 +74,140 @@ func TestFileCacheProvider(t *testing.T) {
 		expected                        expected
 	}{
 		{
-			name: "positive case: cached",
+			name: "positive case",
 			fields: fields{
-				cacheKey: cachedCacheKey,
-				optFns: []func(o *FileCacheOptions){
-					func(o *FileCacheOptions) {
-						o.FileCacheDir = cachedDir
-					},
-				},
-			},
-			args: args{
-				ctx: context.TODO(),
+				cacheKey: "cached",
+				optFns:   []func(o *FileCacheOptions){},
 			},
 			mockCredentialsProviderRetrieve: mockCredentialsProviderRetrieve{
 				res: aws.Credentials{
 					AccessKeyID:     "NonCachedAccessKeyID",
-					SecretAccessKey: "SecretAccessKey",
-					SessionToken:    "SessionToken",
+					SecretAccessKey: "NonCachedSecretAccessKey",
+					SessionToken:    "NonCachedSessionToken",
 					Source:          "TestProvider",
 					CanExpire:       true,
-					Expires:         time.Date(2006, 1, 2, 15, 4, 5, 0, time.UTC),
+					Expires:         expiresIn15Minutes,
 				},
 				err: nil,
+			},
+			args: args{
+				ctx: context.TODO(),
 			},
 			expected: expected{
 				res: aws.Credentials{
 					AccessKeyID:     "CachedAccessKeyID",
-					SecretAccessKey: "SecretAccessKey",
-					SessionToken:    "SessionToken",
+					SecretAccessKey: "CachedSecretAccessKey",
+					SessionToken:    "CachedSessionToken",
 					Source:          "FileCacheProvider",
 					CanExpire:       true,
-					Expires:         cachedExpires,
+					Expires:         expiresIn15Minutes,
 				},
 				err: nil,
 			},
 		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Arrange
+			cachedDir := t.TempDir()
+			StoreCredentials(filepath.Join(cachedDir, fmt.Sprintf("%s.json", tt.fields.cacheKey)), cachedCreds)
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockCredentialsProvider := mock.NewMockCredentialsProvider(ctrl)
+			mockCredentialsProvider.
+				EXPECT().
+				Retrieve(gomock.Any()).
+				Return(tt.mockCredentialsProviderRetrieve.res, tt.mockCredentialsProviderRetrieve.err).
+				Times(0)
+
+			tt.fields.optFns = append(tt.fields.optFns, func(o *FileCacheOptions) { o.FileCacheDir = cachedDir })
+
+			provider := NewFileCacheProvider(mockCredentialsProvider, tt.fields.cacheKey, tt.fields.optFns...)
+
+			// Act
+			actual, err := provider.Retrieve(tt.args.ctx)
+
+			// Assert
+			if tt.expected.err == nil {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expected.res, actual)
+			} else {
+				assert.Error(t, err)
+				assert.Equal(t, tt.expected.err, err)
+			}
+		})
+	}
+}
+
+func TestFileCacheProvider_RetrieveExpiredCredentials(t *testing.T) {
+	expiresIn15Minutes := time.Now().UTC().Add(time.Duration(15) * time.Minute)
+	expired15MinutesAgo := time.Now().UTC().Add(-time.Duration(15) * time.Minute)
+	expiredCreds := &aws.Credentials{
+		AccessKeyID:     "CachedAccessKeyID",
+		SecretAccessKey: "CachedSecretAccessKey",
+		SessionToken:    "CachedSessionToken",
+		Source:          "TestProvider",
+		CanExpire:       true,
+		Expires:         expired15MinutesAgo,
+	}
+
+	type fields struct {
+		cacheKey string
+		optFns   []func(o *FileCacheOptions)
+	}
+
+	type args struct {
+		ctx context.Context
+	}
+
+	type mockCredentialsProviderRetrieve struct {
+		res aws.Credentials
+		err error
+	}
+
+	type expected struct {
+		res aws.Credentials
+		err error
+	}
+
+	tests := []struct {
+		name                            string
+		fields                          fields
+		args                            args
+		mockCredentialsProviderRetrieve mockCredentialsProviderRetrieve
+		expected                        expected
+	}{
 		{
-			name: "positive case: cached but expired",
+			name: "positive case",
 			fields: fields{
-				cacheKey: expiredCacheKey,
-				optFns: []func(o *FileCacheOptions){
-					func(o *FileCacheOptions) {
-						o.FileCacheDir = cachedDir
-					},
-				},
-			},
-			args: args{
-				ctx: context.TODO(),
+				cacheKey: "expired",
+				optFns:   []func(o *FileCacheOptions){},
 			},
 			mockCredentialsProviderRetrieve: mockCredentialsProviderRetrieve{
 				res: aws.Credentials{
 					AccessKeyID:     "NonCachedAccessKeyID",
-					SecretAccessKey: "SecretAccessKey",
-					SessionToken:    "SessionToken",
+					SecretAccessKey: "NonCachedSecretAccessKey",
+					SessionToken:    "NonCachedSessionToken",
 					Source:          "TestProvider",
 					CanExpire:       true,
-					Expires:         time.Date(2006, 1, 2, 15, 4, 5, 0, time.UTC),
+					Expires:         expiresIn15Minutes,
 				},
 				err: nil,
-			},
-			expected: expected{
-				res: aws.Credentials{
-					AccessKeyID:     "NonCachedAccessKeyID",
-					SecretAccessKey: "SecretAccessKey",
-					SessionToken:    "SessionToken",
-					Source:          "FileCacheProvider",
-					CanExpire:       true,
-					Expires:         time.Date(2006, 1, 2, 15, 4, 5, 0, time.UTC),
-				},
-				err: nil,
-			},
-		},
-		{
-			name: "positive case: non-cached",
-			fields: fields{
-				cacheKey: "non-cached",
-				optFns: []func(o *FileCacheOptions){
-					func(o *FileCacheOptions) {
-						o.FileCacheDir = t.TempDir()
-					},
-				},
 			},
 			args: args{
 				ctx: context.TODO(),
 			},
-			mockCredentialsProviderRetrieve: mockCredentialsProviderRetrieve{
-				res: aws.Credentials{
-					AccessKeyID:     "NonCachedAccessKeyID",
-					SecretAccessKey: "SecretAccessKey",
-					SessionToken:    "SessionToken",
-					Source:          "TestProvider",
-					CanExpire:       true,
-					Expires:         time.Date(2006, 1, 2, 15, 4, 5, 0, time.UTC),
-				},
-				err: nil,
-			},
 			expected: expected{
 				res: aws.Credentials{
 					AccessKeyID:     "NonCachedAccessKeyID",
-					SecretAccessKey: "SecretAccessKey",
-					SessionToken:    "SessionToken",
+					SecretAccessKey: "NonCachedSecretAccessKey",
+					SessionToken:    "NonCachedSessionToken",
 					Source:          "FileCacheProvider",
 					CanExpire:       true,
-					Expires:         time.Date(2006, 1, 2, 15, 4, 5, 0, time.UTC),
+					Expires:         expiresIn15Minutes,
 				},
 				err: nil,
 			},
@@ -239,12 +215,8 @@ func TestFileCacheProvider(t *testing.T) {
 		{
 			name: "negative case: failed to retrieve",
 			fields: fields{
-				cacheKey: "non-cached",
-				optFns: []func(o *FileCacheOptions){
-					func(o *FileCacheOptions) {
-						o.FileCacheDir = t.TempDir()
-					},
-				},
+				cacheKey: "expired",
+				optFns:   []func(o *FileCacheOptions){},
 			},
 			args: args{
 				ctx: context.TODO(),
@@ -262,18 +234,143 @@ func TestFileCacheProvider(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Arrange
+			cachedDir := t.TempDir()
+			StoreCredentials(filepath.Join(cachedDir, fmt.Sprintf("%s.json", tt.fields.cacheKey)), expiredCreds)
+
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
+
 			mockCredentialsProvider := mock.NewMockCredentialsProvider(ctrl)
 			mockCredentialsProvider.
 				EXPECT().
 				Retrieve(gomock.Any()).
 				Return(tt.mockCredentialsProviderRetrieve.res, tt.mockCredentialsProviderRetrieve.err).
-				AnyTimes()
+				Times(1)
+
+			tt.fields.optFns = append(tt.fields.optFns, func(o *FileCacheOptions) { o.FileCacheDir = cachedDir })
+
 			provider := NewFileCacheProvider(mockCredentialsProvider, tt.fields.cacheKey, tt.fields.optFns...)
 
+			// Act
 			actual, err := provider.Retrieve(tt.args.ctx)
 
+			// Assert
+			if tt.expected.err == nil {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expected.res, actual)
+			} else {
+				assert.Error(t, err)
+				assert.Equal(t, tt.expected.err, err)
+			}
+		})
+	}
+}
+
+func TestFileCacheProvider_RetrieveNonCachedCredentials(t *testing.T) {
+	expiresIn15Minutes := time.Now().UTC().Add(time.Duration(15) * time.Minute)
+
+	type fields struct {
+		cacheKey string
+		optFns   []func(o *FileCacheOptions)
+	}
+
+	type args struct {
+		ctx context.Context
+	}
+
+	type mockCredentialsProviderRetrieve struct {
+		res aws.Credentials
+		err error
+	}
+
+	type expected struct {
+		res aws.Credentials
+		err error
+	}
+
+	tests := []struct {
+		name                            string
+		fields                          fields
+		args                            args
+		mockCredentialsProviderRetrieve mockCredentialsProviderRetrieve
+		expected                        expected
+	}{
+		{
+			name: "positive case",
+			fields: fields{
+				cacheKey: "non-cached",
+				optFns:   []func(o *FileCacheOptions){},
+			},
+			mockCredentialsProviderRetrieve: mockCredentialsProviderRetrieve{
+				res: aws.Credentials{
+					AccessKeyID:     "NonCachedAccessKeyID",
+					SecretAccessKey: "NonCachedSecretAccessKey",
+					SessionToken:    "NonCachedSessionToken",
+					Source:          "TestProvider",
+					CanExpire:       true,
+					Expires:         expiresIn15Minutes,
+				},
+				err: nil,
+			},
+			args: args{
+				ctx: context.TODO(),
+			},
+			expected: expected{
+				res: aws.Credentials{
+					AccessKeyID:     "NonCachedAccessKeyID",
+					SecretAccessKey: "NonCachedSecretAccessKey",
+					SessionToken:    "NonCachedSessionToken",
+					Source:          "FileCacheProvider",
+					CanExpire:       true,
+					Expires:         expiresIn15Minutes,
+				},
+				err: nil,
+			},
+		},
+		{
+			name: "negative case: failed to retrieve",
+			fields: fields{
+				cacheKey: "non-cached",
+				optFns:   []func(o *FileCacheOptions){},
+			},
+			args: args{
+				ctx: context.TODO(),
+			},
+			mockCredentialsProviderRetrieve: mockCredentialsProviderRetrieve{
+				res: aws.Credentials{Source: "TestProvider"},
+				err: errors.New("failed to retrieve"),
+			},
+			expected: expected{
+				res: aws.Credentials{Source: "FileCacheProvider"},
+				err: errors.New("failed to retrieve"),
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Arrange
+			cachedDir := t.TempDir()
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockCredentialsProvider := mock.NewMockCredentialsProvider(ctrl)
+			mockCredentialsProvider.
+				EXPECT().
+				Retrieve(gomock.Any()).
+				Return(tt.mockCredentialsProviderRetrieve.res, tt.mockCredentialsProviderRetrieve.err).
+				Times(1)
+
+			tt.fields.optFns = append(tt.fields.optFns, func(o *FileCacheOptions) { o.FileCacheDir = cachedDir })
+
+			provider := NewFileCacheProvider(mockCredentialsProvider, tt.fields.cacheKey, tt.fields.optFns...)
+
+			// Act
+			actual, err := provider.Retrieve(tt.args.ctx)
+
+			// Assert
 			if tt.expected.err == nil {
 				assert.NoError(t, err)
 				assert.Equal(t, tt.expected.res, actual)
