@@ -43,20 +43,20 @@ See [exmples](./_examples/) for more details.
 
 ## Development
 
-### setup
+### Setup
 
 ```shell
 go mod tidy
 ```
 
-### generate code
+### Generate code
 
 ```shell
 rm -rf internal/mock
 go generate ./...
 ```
 
-### test
+### Test
 
 ```shell
 : simple
@@ -65,7 +65,7 @@ go test ./...
 go test -v ./...
 ```
 
-### doc
+### Doc
 
 ```shell
 go run golang.org/x/tools/cmd/godoc@latest -http ":6060"
