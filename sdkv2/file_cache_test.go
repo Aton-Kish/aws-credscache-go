@@ -49,7 +49,7 @@ func TestStoreCredentialsAndLoadCredentials(t *testing.T) {
 		{
 			name: "positive case: existing dir",
 			args: args{
-				path: filepath.Join(t.TempDir(), "existing-dir.json"),
+				path: filepath.Join(t.TempDir(), "existing.json"),
 				creds: &aws.Credentials{
 					AccessKeyID:     "AccessKeyID",
 					SecretAccessKey: "SecretAccessKey",
@@ -75,7 +75,7 @@ func TestStoreCredentialsAndLoadCredentials(t *testing.T) {
 		{
 			name: "positive case: non-existing dir",
 			args: args{
-				path: filepath.Join(t.TempDir(), "non-existing/non-existing-dir.json"),
+				path: filepath.Join(t.TempDir(), "non-existing/non-existing.json"),
 				creds: &aws.Credentials{
 					AccessKeyID:     "AccessKeyID",
 					SecretAccessKey: "SecretAccessKey",

@@ -56,7 +56,7 @@ func TestFileCache_StoreAndLoad(t *testing.T) {
 				},
 			},
 			args: args{
-				path: filepath.Join(t.TempDir(), "existing-dir.json"),
+				path: filepath.Join(t.TempDir(), "existing.json"),
 			},
 			expected: expected{
 				loadCache: &FileCache{
@@ -82,7 +82,7 @@ func TestFileCache_StoreAndLoad(t *testing.T) {
 				},
 			},
 			args: args{
-				path: filepath.Join(t.TempDir(), "non-existing/non-existing-dir.json"),
+				path: filepath.Join(t.TempDir(), "non-existing/non-existing.json"),
 			},
 			expected: expected{
 				loadCache: &FileCache{
