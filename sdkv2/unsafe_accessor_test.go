@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-//go:generate go run github.com/golang/mock/mockgen@latest -destination=../mock/github.com/aws/aws-sdk-go-v2/credentials/stscreds/stscreds.go -package=mock_stscreds github.com/aws/aws-sdk-go-v2/credentials/stscreds AssumeRoleAPIClient
+//go:generate go run github.com/golang/mock/mockgen@latest -destination=../internal/mock/github.com/aws/aws-sdk-go-v2/credentials/stscreds/stscreds.go -package=mock_stscreds github.com/aws/aws-sdk-go-v2/credentials/stscreds AssumeRoleAPIClient
 
 package credscache
 
@@ -31,7 +31,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 
-	mock "github.com/Aton-Kish/aws-credscache-go/mock/github.com/aws/aws-sdk-go-v2/credentials/stscreds"
+	mock "github.com/Aton-Kish/aws-credscache-go/internal/mock/github.com/aws/aws-sdk-go-v2/credentials/stscreds"
 )
 
 func TestNewCredentialsCacheUnsafeAccessor(t *testing.T) {

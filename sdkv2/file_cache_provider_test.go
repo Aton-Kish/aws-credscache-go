@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-//go:generate go run github.com/golang/mock/mockgen@latest -destination=../mock/github.com/aws/aws-sdk-go-v2/aws/aws.go -package=mock_aws github.com/aws/aws-sdk-go-v2/aws CredentialsProvider
+//go:generate go run github.com/golang/mock/mockgen@latest -destination=../internal/mock/github.com/aws/aws-sdk-go-v2/aws/aws.go -package=mock_aws github.com/aws/aws-sdk-go-v2/aws CredentialsProvider
 
 package credscache
 
@@ -30,7 +30,7 @@ import (
 	"testing"
 	"time"
 
-	mock "github.com/Aton-Kish/aws-credscache-go/mock/github.com/aws/aws-sdk-go-v2/aws"
+	mock "github.com/Aton-Kish/aws-credscache-go/internal/mock/github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
