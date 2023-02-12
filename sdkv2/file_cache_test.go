@@ -21,7 +21,9 @@
 package credscache
 
 import (
+	"os"
 	"path/filepath"
+	"syscall"
 	"testing"
 	"time"
 
@@ -29,38 +31,39 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestStoreCredentialsAndLoadCredentials(t *testing.T) {
+func TestLoadCredentials(t *testing.T) {
+	tempDir := t.TempDir()
+	creds := &aws.Credentials{
+		AccessKeyID:     "AccessKeyID",
+		SecretAccessKey: "SecretAccessKey",
+		SessionToken:    "SessionToken",
+		Source:          "TestProvider",
+		CanExpire:       true,
+		Expires:         time.Date(2006, 1, 2, 15, 4, 5, 0, time.UTC),
+	}
+	StoreCredentials(filepath.Join(tempDir, "cache.json"), creds)
+
 	type args struct {
-		path  string
-		creds *aws.Credentials
+		path string
 	}
 
 	type expected struct {
-		loadCreds *aws.Credentials
-		loadErr   error
-		storeErr  error
+		res *aws.Credentials
+		err error
 	}
 
 	tests := []struct {
-		name string
-		args args
-		expected
+		name     string
+		args     args
+		expected expected
 	}{
 		{
-			name: "positive case: existing dir",
+			name: "positive case: existing cache",
 			args: args{
-				path: filepath.Join(t.TempDir(), "existing.json"),
-				creds: &aws.Credentials{
-					AccessKeyID:     "AccessKeyID",
-					SecretAccessKey: "SecretAccessKey",
-					SessionToken:    "SessionToken",
-					Source:          "TestProvider",
-					CanExpire:       true,
-					Expires:         time.Date(2006, 1, 2, 15, 4, 5, 0, time.UTC),
-				},
+				path: filepath.Join(tempDir, "cache.json"),
 			},
 			expected: expected{
-				loadCreds: &aws.Credentials{
+				res: &aws.Credentials{
 					AccessKeyID:     "AccessKeyID",
 					SecretAccessKey: "SecretAccessKey",
 					SessionToken:    "SessionToken",
@@ -68,55 +71,96 @@ func TestStoreCredentialsAndLoadCredentials(t *testing.T) {
 					CanExpire:       true,
 					Expires:         time.Date(2006, 1, 2, 15, 4, 5, 0, time.UTC),
 				},
-				loadErr:  nil,
-				storeErr: nil,
+				err: nil,
 			},
 		},
 		{
-			name: "positive case: non-existing dir",
+			name: "negative case: no such file",
 			args: args{
-				path: filepath.Join(t.TempDir(), "non-existing/non-existing.json"),
-				creds: &aws.Credentials{
-					AccessKeyID:     "AccessKeyID",
-					SecretAccessKey: "SecretAccessKey",
-					SessionToken:    "SessionToken",
-					Source:          "TestProvider",
-					CanExpire:       true,
-					Expires:         time.Date(2006, 1, 2, 15, 4, 5, 0, time.UTC),
-				},
+				path: filepath.Join(tempDir, "non-existing.json"),
 			},
 			expected: expected{
-				loadCreds: &aws.Credentials{
-					AccessKeyID:     "AccessKeyID",
-					SecretAccessKey: "SecretAccessKey",
-					SessionToken:    "SessionToken",
-					Source:          "",
-					CanExpire:       true,
-					Expires:         time.Date(2006, 1, 2, 15, 4, 5, 0, time.UTC),
-				},
-				loadErr:  nil,
-				storeErr: nil,
+				res: nil,
+				err: &os.PathError{Op: "open", Path: filepath.Join(tempDir, "non-existing.json"), Err: syscall.Errno(2)},
 			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			storeErr := StoreCredentials(tt.args.path, tt.args.creds)
-			loadCreds, loadErr := LoadCredentials(tt.args.path)
+			actual, err := LoadCredentials(tt.args.path)
 
-			if tt.expected.storeErr == nil {
-				assert.NoError(t, storeErr)
+			if tt.expected.err == nil {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expected.res, actual)
 			} else {
-				assert.Error(t, storeErr)
-				assert.Equal(t, tt.expected.storeErr, storeErr)
+				assert.Error(t, err)
+				assert.Equal(t, tt.expected.err, err)
 			}
-			if tt.expected.loadErr == nil {
-				assert.NoError(t, loadErr)
-				assert.Equal(t, tt.expected.loadCreds, loadCreds)
+		})
+	}
+}
+
+func TestStoreCredentials(t *testing.T) {
+	type args struct {
+		path  string
+		creds *aws.Credentials
+	}
+
+	type expected struct {
+		err error
+	}
+
+	tests := []struct {
+		name     string
+		args     args
+		expected expected
+	}{
+		{
+			name: "positive case: existing dir",
+			args: args{
+				path: filepath.Join(t.TempDir(), "cache.json"),
+				creds: &aws.Credentials{
+					AccessKeyID:     "AccessKeyID",
+					SecretAccessKey: "SecretAccessKey",
+					SessionToken:    "SessionToken",
+					Source:          "TestProvider",
+					CanExpire:       true,
+					Expires:         time.Date(2006, 1, 2, 15, 4, 5, 0, time.UTC),
+				},
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+		{
+			name: "positive case: non-existing dir",
+			args: args{
+				path: filepath.Join(t.TempDir(), "non-existing/cache.json"),
+				creds: &aws.Credentials{
+					AccessKeyID:     "AccessKeyID",
+					SecretAccessKey: "SecretAccessKey",
+					SessionToken:    "SessionToken",
+					Source:          "TestProvider",
+					CanExpire:       true,
+					Expires:         time.Date(2006, 1, 2, 15, 4, 5, 0, time.UTC),
+				},
+			},
+			expected: expected{
+				err: nil,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := StoreCredentials(tt.args.path, tt.args.creds)
+
+			if tt.expected.err == nil {
+				assert.NoError(t, err)
 			} else {
-				assert.Error(t, loadErr)
-				assert.Equal(t, tt.expected.loadErr, loadErr)
+				assert.Error(t, err)
+				assert.Equal(t, tt.expected.err, err)
 			}
 		})
 	}

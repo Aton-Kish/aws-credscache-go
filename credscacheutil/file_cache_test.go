@@ -21,22 +21,95 @@
 package credscacheutil
 
 import (
+	"os"
 	"path/filepath"
+	"syscall"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func TestFileCache_StoreAndLoad(t *testing.T) {
+func TestFileCache_Load(t *testing.T) {
+	tempDir := t.TempDir()
+	cache := &FileCache{
+		Credentials: CachedCredentials{
+			AccessKeyID:     "AccessKeyID",
+			SecretAccessKey: "SecretAccessKey",
+			SessionToken:    "SessionToken",
+			Expires:         time.Date(2006, 1, 2, 15, 4, 5, 0, time.UTC),
+		},
+	}
+	cache.Store(filepath.Join(tempDir, "cache.json"))
+
 	type args struct {
 		path string
 	}
 
 	type expected struct {
-		loadCache *FileCache
-		loadErr   error
-		storeErr  error
+		cache *FileCache
+		err   error
+	}
+
+	tests := []struct {
+		name     string
+		cache    *FileCache
+		args     args
+		expected expected
+	}{
+		{
+			name:  "positive case: existing cache",
+			cache: new(FileCache),
+			args: args{
+				path: filepath.Join(tempDir, "cache.json"),
+			},
+			expected: expected{
+				cache: &FileCache{
+					Credentials: CachedCredentials{
+						AccessKeyID:     "AccessKeyID",
+						SecretAccessKey: "SecretAccessKey",
+						SessionToken:    "SessionToken",
+						Expires:         time.Date(2006, 1, 2, 15, 4, 5, 0, time.UTC),
+					},
+				},
+				err: nil,
+			},
+		},
+		{
+			name:  "negative case: no such file",
+			cache: new(FileCache),
+			args: args{
+				path: filepath.Join(tempDir, "non-existing.json"),
+			},
+			expected: expected{
+				cache: nil,
+				err:   &os.PathError{Op: "open", Path: filepath.Join(tempDir, "non-existing.json"), Err: syscall.Errno(2)},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.cache.Load(tt.args.path)
+
+			if tt.expected.err == nil {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expected.cache, tt.cache)
+			} else {
+				assert.Error(t, err)
+				assert.Equal(t, tt.expected.err, err)
+			}
+		})
+	}
+}
+
+func TestFileCache_Store(t *testing.T) {
+	type args struct {
+		path string
+	}
+
+	type expected struct {
+		err error
 	}
 
 	tests := []struct {
@@ -56,19 +129,10 @@ func TestFileCache_StoreAndLoad(t *testing.T) {
 				},
 			},
 			args: args{
-				path: filepath.Join(t.TempDir(), "existing.json"),
+				path: filepath.Join(t.TempDir(), "cache.json"),
 			},
 			expected: expected{
-				loadCache: &FileCache{
-					Credentials: CachedCredentials{
-						AccessKeyID:     "AccessKeyID",
-						SecretAccessKey: "SecretAccessKey",
-						SessionToken:    "SessionToken",
-						Expires:         time.Date(2006, 1, 2, 15, 4, 5, 0, time.UTC),
-					},
-				},
-				loadErr:  nil,
-				storeErr: nil,
+				err: nil,
 			},
 		},
 		{
@@ -82,41 +146,23 @@ func TestFileCache_StoreAndLoad(t *testing.T) {
 				},
 			},
 			args: args{
-				path: filepath.Join(t.TempDir(), "non-existing/non-existing.json"),
+				path: filepath.Join(t.TempDir(), "non-existing/cache.json"),
 			},
 			expected: expected{
-				loadCache: &FileCache{
-					Credentials: CachedCredentials{
-						AccessKeyID:     "AccessKeyID",
-						SecretAccessKey: "SecretAccessKey",
-						SessionToken:    "SessionToken",
-						Expires:         time.Date(2006, 1, 2, 15, 4, 5, 0, time.UTC),
-					},
-				},
-				loadErr:  nil,
-				storeErr: nil,
+				err: nil,
 			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			storeErr := tt.cache.Store(tt.args.path)
-			loadCache := new(FileCache)
-			loadErr := loadCache.Load(tt.args.path)
+			err := tt.cache.Store(tt.args.path)
 
-			if tt.expected.storeErr == nil {
-				assert.NoError(t, storeErr)
+			if tt.expected.err == nil {
+				assert.NoError(t, err)
 			} else {
-				assert.Error(t, storeErr)
-				assert.Equal(t, tt.expected.storeErr, storeErr)
-			}
-			if tt.expected.loadErr == nil {
-				assert.NoError(t, loadErr)
-				assert.Equal(t, tt.expected.loadCache, loadCache)
-			} else {
-				assert.Error(t, loadErr)
-				assert.Equal(t, tt.expected.loadErr, loadErr)
+				assert.Error(t, err)
+				assert.Equal(t, tt.expected.err, err)
 			}
 		})
 	}
