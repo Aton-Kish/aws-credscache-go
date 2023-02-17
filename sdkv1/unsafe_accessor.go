@@ -21,22 +21,41 @@
 package credscache
 
 import (
-	"errors"
-	"fmt"
+	"reflect"
+	"unsafe"
+
+	"github.com/aws/aws-sdk-go/aws/credentials"
 )
 
-var (
-	ErrNilPointer = errors.New("nil pointer")
-)
-
-type FileCacheProviderError struct {
-	Err error
+type CredentialsUnsafeAccessor struct {
+	ptr *credentials.Credentials
 }
 
-func (e *FileCacheProviderError) Error() string {
-	return fmt.Sprintf("file cache provider error: %v", e.Err)
+func NewCredentialsUnsafeAccessor(ptr *credentials.Credentials) (*CredentialsUnsafeAccessor, error) {
+	if ptr == nil {
+		return nil, ErrNilPointer
+	}
+
+	a := &CredentialsUnsafeAccessor{
+		ptr: ptr,
+	}
+
+	return a, nil
 }
 
-func (e *FileCacheProviderError) Unwrap() error {
-	return e.Err
+func (a *CredentialsUnsafeAccessor) provider() *credentials.Provider {
+	v := reflect.ValueOf(a.ptr).Elem()
+	f := v.FieldByName("provider")
+	ptr := (*credentials.Provider)(unsafe.Pointer(f.UnsafeAddr()))
+	return ptr
+}
+
+func (a *CredentialsUnsafeAccessor) Provider() credentials.Provider {
+	ptr := a.provider()
+	return *ptr
+}
+
+func (a *CredentialsUnsafeAccessor) SetProvider(provider credentials.Provider) {
+	ptr := a.provider()
+	*ptr = provider
 }
