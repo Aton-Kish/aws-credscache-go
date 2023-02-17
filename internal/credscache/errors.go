@@ -21,14 +21,34 @@
 package credscache
 
 import (
-	"github.com/Aton-Kish/aws-credscache-go/internal/credscache"
+	"errors"
+	"fmt"
 )
 
 var (
-	ErrNilPointer = credscache.ErrNilPointer
+	ErrNilPointer = errors.New("nil pointer")
 )
 
-type (
-	FileCacheProviderError = credscache.FileCacheProviderError
-	InjectionError         = credscache.InjectionError
-)
+type FileCacheProviderError struct {
+	Err error
+}
+
+func (e *FileCacheProviderError) Error() string {
+	return fmt.Sprintf("file cache provider error: %v", e.Err)
+}
+
+func (e *FileCacheProviderError) Unwrap() error {
+	return e.Err
+}
+
+type InjectionError struct {
+	Err error
+}
+
+func (e *InjectionError) Error() string {
+	return fmt.Sprintf("failed to inject, %v", e.Err)
+}
+
+func (e *InjectionError) Unwrap() error {
+	return e.Err
+}
