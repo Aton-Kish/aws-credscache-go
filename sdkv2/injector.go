@@ -31,33 +31,26 @@ func InjectFileCacheProvider(cfg *aws.Config, optFns ...func(o *FileCacheOptions
 		return false, nil
 	}
 
-	credsCacheAccessor, err := NewCredentialsCacheUnsafeAccessor(credsCache)
+	accessor, err := NewCredentialsCacheUnsafeAccessor(credsCache)
 	if err != nil {
 		err = &InjectionError{Err: err}
 		return false, err
 	}
 
-	provider := credsCacheAccessor.Provider()
+	provider := accessor.Provider()
 	assumeRoleProvider, ok := provider.(*stscreds.AssumeRoleProvider)
 	if !ok {
 		return false, nil
 	}
 
-	assumeRoleProviderAccessor, err := NewAssumeRoleProviderUnsafeAccessor(assumeRoleProvider)
-	if err != nil {
-		err = &InjectionError{Err: err}
-		return false, err
-	}
-
-	options := assumeRoleProviderAccessor.Options()
-	key, err := AssumeRoleCacheKey(&options)
+	key, err := AssumeRoleCacheKey(assumeRoleProvider)
 	if err != nil {
 		err = &InjectionError{Err: err}
 		return false, err
 	}
 
 	fileCacheProvider := NewFileCacheProvider(assumeRoleProvider, key, optFns...)
-	credsCacheAccessor.SetProvider(fileCacheProvider)
+	accessor.SetProvider(fileCacheProvider)
 
 	return true, nil
 }

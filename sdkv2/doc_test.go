@@ -32,12 +32,11 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
+	"github.com/aws/aws-sdk-go-v2/service/sts"
 )
 
 func ExampleAssumeRoleCacheKey() {
-	key, err := credscache.AssumeRoleCacheKey(&stscreds.AssumeRoleOptions{
-		RoleARN: "role_arn",
-	})
+	key, err := credscache.AssumeRoleCacheKey(stscreds.NewAssumeRoleProvider(&sts.Client{}, "role_arn"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -48,11 +47,10 @@ func ExampleAssumeRoleCacheKey() {
 }
 
 func ExampleAssumeRoleCacheKey_withRoleSessionNameAndMFASerial() {
-	key, err := credscache.AssumeRoleCacheKey(&stscreds.AssumeRoleOptions{
-		RoleARN:         "role_arn",
-		RoleSessionName: "role_session_name",
-		SerialNumber:    aws.String("mfa_serial"),
-	})
+	key, err := credscache.AssumeRoleCacheKey(stscreds.NewAssumeRoleProvider(&sts.Client{}, "role_arn", func(o *stscreds.AssumeRoleOptions) {
+		o.RoleSessionName = "role_session_name"
+		o.SerialNumber = aws.String("mfa_serial")
+	}))
 	if err != nil {
 		log.Fatal(err)
 	}

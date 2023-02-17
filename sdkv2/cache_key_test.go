@@ -24,12 +24,13 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
+	"github.com/aws/aws-sdk-go-v2/service/sts"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestAssumeRoleCacheKey(t *testing.T) {
 	type args struct {
-		options *stscreds.AssumeRoleOptions
+		provider *stscreds.AssumeRoleProvider
 	}
 
 	type expected struct {
@@ -45,9 +46,7 @@ func TestAssumeRoleCacheKey(t *testing.T) {
 		{
 			name: "positive case: with RoleARN",
 			args: args{
-				options: &stscreds.AssumeRoleOptions{
-					RoleARN: "role_arn",
-				},
+				provider: stscreds.NewAssumeRoleProvider(&sts.Client{}, "role_arn"),
 			},
 			expected: expected{
 				res: "de1969e7a880d858c9bef3ba110acf78869d4527",
@@ -58,7 +57,7 @@ func TestAssumeRoleCacheKey(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual, err := AssumeRoleCacheKey(tt.args.options)
+			actual, err := AssumeRoleCacheKey(tt.args.provider)
 
 			if tt.expected.err == nil {
 				assert.NoError(t, err)
