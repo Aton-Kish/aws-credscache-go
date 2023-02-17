@@ -28,7 +28,6 @@ import (
 func AssumeRoleCacheKey(provider *stscreds.AssumeRoleProvider) (string, error) {
 	accessor, err := NewAssumeRoleProviderUnsafeAccessor(provider)
 	if err != nil {
-		err = &InjectionError{Err: err}
 		return "", err
 	}
 
