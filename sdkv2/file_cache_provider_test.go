@@ -185,9 +185,9 @@ func TestFileCacheProvider_Retrieve(t *testing.T) {
 			},
 		},
 		{
-			name: "positive case: constant credentials",
+			name: "positive case: static credentials",
 			fields: fields{
-				cacheKey: "constant",
+				cacheKey: "static",
 				optFns:   []func(o *FileCacheOptions){},
 			},
 			args: args{

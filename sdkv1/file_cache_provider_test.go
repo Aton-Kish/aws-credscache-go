@@ -275,9 +275,9 @@ func TestFileCacheProvider_RetrieveWithNonExpireProvider(t *testing.T) {
 		expected                                   expected
 	}{
 		{
-			name: "positive case: constant credentials",
+			name: "positive case: static credentials",
 			fields: fields{
-				cacheKey: "constant",
+				cacheKey: "static",
 				optFns:   []func(o *FileCacheOptions){},
 			},
 			mockProviderWithContextRetrieveWithContext: mockProviderWithContextRetrieveWithContext{
@@ -303,7 +303,7 @@ func TestFileCacheProvider_RetrieveWithNonExpireProvider(t *testing.T) {
 		{
 			name: "negative case: failed to retrieve",
 			fields: fields{
-				cacheKey: "constant",
+				cacheKey: "static",
 				optFns:   []func(o *FileCacheOptions){},
 			},
 			mockProviderWithContextRetrieveWithContext: mockProviderWithContextRetrieveWithContext{
