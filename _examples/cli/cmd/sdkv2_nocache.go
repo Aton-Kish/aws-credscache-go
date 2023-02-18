@@ -23,19 +23,16 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"os"
-	"path/filepath"
 
-	credscache "github.com/Aton-Kish/aws-credscache-go/sdkv2"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 	"github.com/spf13/cobra"
 )
 
-var cacheCmd = &cobra.Command{
-	Use:   "cache",
-	Short: "Call AWS API with the cached credentials",
+var sdkv2NocacheCmd = &cobra.Command{
+	Use:   "nocache",
+	Short: "Call AWS API without the cached credentials",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := cmd.Context()
 
@@ -51,16 +48,6 @@ var cacheCmd = &cobra.Command{
 
 		cfg, err := config.LoadDefaultConfig(ctx, loadOptFns...)
 		if err != nil {
-			return err
-		}
-
-		cacheOptFns := []func(o *credscache.FileCacheOptions){
-			func(o *credscache.FileCacheOptions) {
-				home, _ := os.UserHomeDir()
-				o.FileCacheDir = filepath.Join(home, ".aws/cli/cache")
-			},
-		}
-		if _, err := credscache.InjectFileCacheProvider(&cfg, cacheOptFns...); err != nil {
 			return err
 		}
 
@@ -82,5 +69,5 @@ var cacheCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(cacheCmd)
+	sdkv2Cmd.AddCommand(sdkv2NocacheCmd)
 }

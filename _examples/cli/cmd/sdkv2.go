@@ -21,53 +21,15 @@
 package cmd
 
 import (
-	"encoding/json"
-	"fmt"
-
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
-	"github.com/aws/aws-sdk-go-v2/service/sts"
 	"github.com/spf13/cobra"
 )
 
-var nocacheCmd = &cobra.Command{
-	Use:   "nocache",
-	Short: "Call AWS API without the cached credentials",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		ctx := cmd.Context()
-
-		loadOptFns := []func(o *config.LoadOptions) error{
-			config.WithAssumeRoleCredentialOptions(func(o *stscreds.AssumeRoleOptions) {
-				o.TokenProvider = stscreds.StdinTokenProvider
-			}),
-		}
-
-		if profile != "" {
-			loadOptFns = append(loadOptFns, config.WithSharedConfigProfile(profile))
-		}
-
-		cfg, err := config.LoadDefaultConfig(ctx, loadOptFns...)
-		if err != nil {
-			return err
-		}
-
-		stsClient := sts.NewFromConfig(cfg)
-		output, err := stsClient.GetCallerIdentity(ctx, &sts.GetCallerIdentityInput{})
-		if err != nil {
-			return err
-		}
-
-		data, err := json.MarshalIndent(output, "", "  ")
-		if err != nil {
-			return err
-		}
-
-		fmt.Println(string(data))
-
-		return nil
-	},
+// sdkv2Cmd represents the sdkv2 command
+var sdkv2Cmd = &cobra.Command{
+	Use:   "sdkv2",
+	Short: "An example CLI for AWS SDK v2",
 }
 
 func init() {
-	rootCmd.AddCommand(nocacheCmd)
+	rootCmd.AddCommand(sdkv2Cmd)
 }
