@@ -21,22 +21,23 @@
 package credscache_test
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"time"
 
-	credscache "github.com/Aton-Kish/aws-credscache-go/sdkv2"
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
-	"github.com/aws/aws-sdk-go-v2/service/sts"
+	credscache "github.com/Aton-Kish/aws-credscache-go/sdkv1"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
+	"github.com/aws/aws-sdk-go/aws/session"
 )
 
 func ExampleAssumeRoleCacheKey() {
-	key, err := credscache.AssumeRoleCacheKey(stscreds.NewAssumeRoleProvider(&sts.Client{}, "role_arn"))
+	key, err := credscache.AssumeRoleCacheKey(&stscreds.AssumeRoleProvider{
+		RoleARN: "role_arn",
+	})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -47,10 +48,11 @@ func ExampleAssumeRoleCacheKey() {
 }
 
 func ExampleAssumeRoleCacheKey_withRoleSessionNameAndMFASerial() {
-	key, err := credscache.AssumeRoleCacheKey(stscreds.NewAssumeRoleProvider(&sts.Client{}, "role_arn", func(o *stscreds.AssumeRoleOptions) {
-		o.RoleSessionName = "role_session_name"
-		o.SerialNumber = aws.String("mfa_serial")
-	}))
+	key, err := credscache.AssumeRoleCacheKey(&stscreds.AssumeRoleProvider{
+		RoleARN:         "role_arn",
+		RoleSessionName: "role_session_name",
+		SerialNumber:    aws.String("mfa_serial"),
+	})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -62,46 +64,46 @@ func ExampleAssumeRoleCacheKey_withRoleSessionNameAndMFASerial() {
 
 func ExampleLoadCredentials() {
 	path := "/home/gopher/.aws/cli/cache/de1969e7a880d858c9bef3ba110acf78869d4527.json"
-	creds, err := credscache.LoadCredentials(path)
+	creds, expires, err := credscache.LoadCredentials(path)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	fmt.Println(creds)
-	// &aws.Credentials{
+	// &credentials.Value{
 	// 	AccessKeyID:     "AccessKeyID",
 	// 	SecretAccessKey: "SecretAccessKey",
 	// 	SessionToken:    "SessionToken",
-	// 	Source:          "",
-	// 	CanExpire:       true,
-	// 	Expires:         time.Date(2006, 1, 2, 15, 4, 5, 0, time.UTC),
+	// 	ProviderName:    "",
 	// }
+	fmt.Println(expires)
+	// time.Date(2006, 1, 2, 15, 4, 5, 0, time.UTC)
 }
 
 func ExampleStoreCredentials() {
 	path := "/home/gopher/.aws/cli/cache/de1969e7a880d858c9bef3ba110acf78869d4527.json"
-	creds := &aws.Credentials{
+	creds := &credentials.Value{
 		AccessKeyID:     "AccessKeyID",
 		SecretAccessKey: "SecretAccessKey",
 		SessionToken:    "SessionToken",
-		Source:          "TestProvider",
-		CanExpire:       true,
-		Expires:         time.Date(2006, 1, 2, 15, 4, 5, 0, time.UTC),
+		ProviderName:    "TestProvider",
 	}
-	if err := credscache.StoreCredentials(path, creds); err != nil {
+	expires := time.Date(2006, 1, 2, 15, 4, 5, 0, time.UTC)
+	if err := credscache.StoreCredentials(path, creds, expires); err != nil {
 		log.Fatal(err)
 	}
 }
 
 func ExampleInjectFileCacheProvider() {
-	cfg, err := config.LoadDefaultConfig(context.Background(), config.WithAssumeRoleCredentialOptions(func(options *stscreds.AssumeRoleOptions) {
-		options.TokenProvider = stscreds.StdinTokenProvider
-	}))
+	sess, err := session.NewSessionWithOptions(session.Options{
+		SharedConfigState:       session.SharedConfigEnable,
+		AssumeRoleTokenProvider: stscreds.StdinTokenProvider,
+	})
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	injected, err := credscache.InjectFileCacheProvider(&cfg)
+	injected, err := credscache.InjectFileCacheProvider(sess.Config)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -112,14 +114,15 @@ func ExampleInjectFileCacheProvider() {
 }
 
 func ExampleInjectFileCacheProvider_specifiedFileCacheDir() {
-	cfg, err := config.LoadDefaultConfig(context.Background(), config.WithAssumeRoleCredentialOptions(func(options *stscreds.AssumeRoleOptions) {
-		options.TokenProvider = stscreds.StdinTokenProvider
-	}))
+	sess, err := session.NewSessionWithOptions(session.Options{
+		SharedConfigState:       session.SharedConfigEnable,
+		AssumeRoleTokenProvider: stscreds.StdinTokenProvider,
+	})
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	injected, err := credscache.InjectFileCacheProvider(&cfg, func(o *credscache.FileCacheOptions) {
+	injected, err := credscache.InjectFileCacheProvider(sess.Config, func(o *credscache.FileCacheOptions) {
 		home, _ := os.UserHomeDir()
 		o.FileCacheDir = filepath.Join(home, ".aws/cli/cache")
 	})

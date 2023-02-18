@@ -21,36 +21,41 @@
 package credscache
 
 import (
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
+	"reflect"
+	"unsafe"
+
+	"github.com/aws/aws-sdk-go/aws/credentials"
 )
 
-func InjectFileCacheProvider(cfg *aws.Config, optFns ...func(o *FileCacheOptions)) (bool, error) {
-	credsCache, ok := cfg.Credentials.(*aws.CredentialsCache)
-	if !ok {
-		return false, nil
+type CredentialsUnsafeAccessor struct {
+	ptr *credentials.Credentials
+}
+
+func NewCredentialsUnsafeAccessor(ptr *credentials.Credentials) (*CredentialsUnsafeAccessor, error) {
+	if ptr == nil {
+		return nil, ErrNilPointer
 	}
 
-	accessor, err := NewCredentialsCacheUnsafeAccessor(credsCache)
-	if err != nil {
-		err = &InjectionError{Err: err}
-		return false, err
+	a := &CredentialsUnsafeAccessor{
+		ptr: ptr,
 	}
 
-	provider := accessor.Provider()
-	assumeRoleProvider, ok := provider.(*stscreds.AssumeRoleProvider)
-	if !ok {
-		return false, nil
-	}
+	return a, nil
+}
 
-	key, err := AssumeRoleCacheKey(assumeRoleProvider)
-	if err != nil {
-		err = &InjectionError{Err: err}
-		return false, err
-	}
+func (a *CredentialsUnsafeAccessor) provider() *credentials.Provider {
+	v := reflect.ValueOf(a.ptr).Elem()
+	f := v.FieldByName("provider")
+	ptr := (*credentials.Provider)(unsafe.Pointer(f.UnsafeAddr()))
+	return ptr
+}
 
-	fileCacheProvider := NewFileCacheProvider(assumeRoleProvider, key, optFns...)
-	accessor.SetProvider(fileCacheProvider)
+func (a *CredentialsUnsafeAccessor) Provider() credentials.Provider {
+	ptr := a.provider()
+	return *ptr
+}
 
-	return true, nil
+func (a *CredentialsUnsafeAccessor) SetProvider(provider credentials.Provider) {
+	ptr := a.provider()
+	*ptr = provider
 }

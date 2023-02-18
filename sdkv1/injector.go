@@ -21,23 +21,18 @@
 package credscache
 
 import (
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 )
 
 func InjectFileCacheProvider(cfg *aws.Config, optFns ...func(o *FileCacheOptions)) (bool, error) {
-	credsCache, ok := cfg.Credentials.(*aws.CredentialsCache)
-	if !ok {
-		return false, nil
-	}
-
-	accessor, err := NewCredentialsCacheUnsafeAccessor(credsCache)
+	credsAccessor, err := NewCredentialsUnsafeAccessor(cfg.Credentials)
 	if err != nil {
 		err = &InjectionError{Err: err}
 		return false, err
 	}
 
-	provider := accessor.Provider()
+	provider := credsAccessor.Provider()
 	assumeRoleProvider, ok := provider.(*stscreds.AssumeRoleProvider)
 	if !ok {
 		return false, nil
@@ -50,7 +45,7 @@ func InjectFileCacheProvider(cfg *aws.Config, optFns ...func(o *FileCacheOptions
 	}
 
 	fileCacheProvider := NewFileCacheProvider(assumeRoleProvider, key, optFns...)
-	accessor.SetProvider(fileCacheProvider)
+	credsAccessor.SetProvider(fileCacheProvider)
 
 	return true, nil
 }

@@ -22,9 +22,9 @@ package credscache
 
 import (
 	"testing"
+	"time"
 
-	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
-	"github.com/aws/aws-sdk-go-v2/service/sts"
+	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -46,7 +46,22 @@ func TestAssumeRoleCacheKey(t *testing.T) {
 		{
 			name: "positive case: with RoleARN",
 			args: args{
-				provider: stscreds.NewAssumeRoleProvider(&sts.Client{}, "role_arn"),
+				provider: &stscreds.AssumeRoleProvider{
+					RoleARN: "role_arn",
+				},
+			},
+			expected: expected{
+				res: "de1969e7a880d858c9bef3ba110acf78869d4527",
+				err: nil,
+			},
+		},
+		{
+			name: "positive case: with Duration 15 minutes or less",
+			args: args{
+				provider: &stscreds.AssumeRoleProvider{
+					RoleARN:  "role_arn",
+					Duration: time.Duration(15) * time.Minute,
+				},
 			},
 			expected: expected{
 				res: "de1969e7a880d858c9bef3ba110acf78869d4527",

@@ -25,7 +25,13 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
 )
 
-func AssumeRoleCacheKey(options *stscreds.AssumeRoleOptions) (string, error) {
+func AssumeRoleCacheKey(provider *stscreds.AssumeRoleProvider) (string, error) {
+	accessor, err := NewAssumeRoleProviderUnsafeAccessor(provider)
+	if err != nil {
+		return "", err
+	}
+
+	options := accessor.Options()
 	g := &credscacheutil.AssumeRoleCacheKeyGenerator{
 		RoleARN:         options.RoleARN,
 		RoleSessionName: options.RoleSessionName,

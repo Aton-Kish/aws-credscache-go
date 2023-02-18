@@ -21,36 +21,34 @@
 package credscache
 
 import (
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
+	"errors"
+	"fmt"
 )
 
-func InjectFileCacheProvider(cfg *aws.Config, optFns ...func(o *FileCacheOptions)) (bool, error) {
-	credsCache, ok := cfg.Credentials.(*aws.CredentialsCache)
-	if !ok {
-		return false, nil
-	}
+var (
+	ErrNilPointer = errors.New("nil pointer")
+)
 
-	accessor, err := NewCredentialsCacheUnsafeAccessor(credsCache)
-	if err != nil {
-		err = &InjectionError{Err: err}
-		return false, err
-	}
+type FileCacheProviderError struct {
+	Err error
+}
 
-	provider := accessor.Provider()
-	assumeRoleProvider, ok := provider.(*stscreds.AssumeRoleProvider)
-	if !ok {
-		return false, nil
-	}
+func (e *FileCacheProviderError) Error() string {
+	return fmt.Sprintf("file cache provider error: %v", e.Err)
+}
 
-	key, err := AssumeRoleCacheKey(assumeRoleProvider)
-	if err != nil {
-		err = &InjectionError{Err: err}
-		return false, err
-	}
+func (e *FileCacheProviderError) Unwrap() error {
+	return e.Err
+}
 
-	fileCacheProvider := NewFileCacheProvider(assumeRoleProvider, key, optFns...)
-	accessor.SetProvider(fileCacheProvider)
+type InjectionError struct {
+	Err error
+}
 
-	return true, nil
+func (e *InjectionError) Error() string {
+	return fmt.Sprintf("failed to inject, %v", e.Err)
+}
+
+func (e *InjectionError) Unwrap() error {
+	return e.Err
 }

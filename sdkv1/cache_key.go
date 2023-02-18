@@ -21,36 +21,25 @@
 package credscache
 
 import (
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
+	"time"
+
+	"github.com/Aton-Kish/aws-credscache-go/credscacheutil"
+	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 )
 
-func InjectFileCacheProvider(cfg *aws.Config, optFns ...func(o *FileCacheOptions)) (bool, error) {
-	credsCache, ok := cfg.Credentials.(*aws.CredentialsCache)
-	if !ok {
-		return false, nil
+func AssumeRoleCacheKey(provider *stscreds.AssumeRoleProvider) (string, error) {
+	duration := provider.Duration
+	if duration <= stscreds.DefaultDuration {
+		duration = time.Duration(0)
 	}
 
-	accessor, err := NewCredentialsCacheUnsafeAccessor(credsCache)
-	if err != nil {
-		err = &InjectionError{Err: err}
-		return false, err
+	g := &credscacheutil.AssumeRoleCacheKeyGenerator{
+		RoleARN:         provider.RoleARN,
+		RoleSessionName: provider.RoleSessionName,
+		ExternalID:      provider.ExternalID,
+		SerialNumber:    provider.SerialNumber,
+		Duration:        duration,
 	}
 
-	provider := accessor.Provider()
-	assumeRoleProvider, ok := provider.(*stscreds.AssumeRoleProvider)
-	if !ok {
-		return false, nil
-	}
-
-	key, err := AssumeRoleCacheKey(assumeRoleProvider)
-	if err != nil {
-		err = &InjectionError{Err: err}
-		return false, err
-	}
-
-	fileCacheProvider := NewFileCacheProvider(assumeRoleProvider, key, optFns...)
-	accessor.SetProvider(fileCacheProvider)
-
-	return true, nil
+	return g.CacheKey()
 }

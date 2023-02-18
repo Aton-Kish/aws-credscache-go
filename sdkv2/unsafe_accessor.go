@@ -28,72 +28,63 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
 )
 
-type CredentialsCacheUnsafeAccessor interface {
-	Provider() aws.CredentialsProvider
-	SetProvider(provider aws.CredentialsProvider)
-}
-
-type credentialsCacheUnsafeAccessor struct {
+type CredentialsCacheUnsafeAccessor struct {
 	ptr *aws.CredentialsCache
 }
 
-func NewCredentialsCacheUnsafeAccessor(ptr *aws.CredentialsCache) (CredentialsCacheUnsafeAccessor, error) {
+func NewCredentialsCacheUnsafeAccessor(ptr *aws.CredentialsCache) (*CredentialsCacheUnsafeAccessor, error) {
 	if ptr == nil {
 		return nil, ErrNilPointer
 	}
 
-	a := &credentialsCacheUnsafeAccessor{
+	a := &CredentialsCacheUnsafeAccessor{
 		ptr: ptr,
 	}
 
 	return a, nil
 }
 
-func (a *credentialsCacheUnsafeAccessor) provider() *aws.CredentialsProvider {
+func (a *CredentialsCacheUnsafeAccessor) provider() *aws.CredentialsProvider {
 	v := reflect.ValueOf(a.ptr).Elem()
 	f := v.FieldByName("provider")
 	ptr := (*aws.CredentialsProvider)(unsafe.Pointer(f.UnsafeAddr()))
 	return ptr
 }
 
-func (a *credentialsCacheUnsafeAccessor) Provider() aws.CredentialsProvider {
+func (a *CredentialsCacheUnsafeAccessor) Provider() aws.CredentialsProvider {
 	ptr := a.provider()
 	return *ptr
 }
 
-func (a *credentialsCacheUnsafeAccessor) SetProvider(provider aws.CredentialsProvider) {
+func (a *CredentialsCacheUnsafeAccessor) SetProvider(provider aws.CredentialsProvider) {
 	ptr := a.provider()
 	*ptr = provider
 }
 
-type AssumeRoleProviderUnsafeAccessor interface {
-	Options() stscreds.AssumeRoleOptions
-}
-
-type assumeRoleProviderUnsafeAccessor struct {
+type AssumeRoleProviderUnsafeAccessor struct {
 	ptr *stscreds.AssumeRoleProvider
 }
 
-func NewAssumeRoleProviderUnsafeAccessor(ptr *stscreds.AssumeRoleProvider) (AssumeRoleProviderUnsafeAccessor, error) {
+func NewAssumeRoleProviderUnsafeAccessor(ptr *stscreds.AssumeRoleProvider) (*AssumeRoleProviderUnsafeAccessor, error) {
 	if ptr == nil {
 		return nil, ErrNilPointer
 	}
 
-	a := &assumeRoleProviderUnsafeAccessor{
+	a := &AssumeRoleProviderUnsafeAccessor{
 		ptr: ptr,
 	}
 
 	return a, nil
 }
 
-func (a *assumeRoleProviderUnsafeAccessor) options() *stscreds.AssumeRoleOptions {
+func (a *AssumeRoleProviderUnsafeAccessor) options() *stscreds.AssumeRoleOptions {
 	v := reflect.ValueOf(a.ptr).Elem()
 	f := v.FieldByName("options")
 	ptr := (*stscreds.AssumeRoleOptions)(unsafe.Pointer(f.UnsafeAddr()))
 	return ptr
 }
 
-func (a *assumeRoleProviderUnsafeAccessor) Options() stscreds.AssumeRoleOptions {
+func (a *AssumeRoleProviderUnsafeAccessor) Options() stscreds.AssumeRoleOptions {
 	ptr := a.options()
 	return *ptr
 }

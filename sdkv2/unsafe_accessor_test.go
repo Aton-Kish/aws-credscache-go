@@ -18,8 +18,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-//go:generate go run github.com/golang/mock/mockgen@latest -destination=../internal/mock/github.com/aws/aws-sdk-go-v2/credentials/stscreds/stscreds.go -package=mock_stscreds github.com/aws/aws-sdk-go-v2/credentials/stscreds AssumeRoleAPIClient
-
 package credscache
 
 import (
@@ -28,19 +26,17 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
-	"github.com/golang/mock/gomock"
+	"github.com/aws/aws-sdk-go-v2/service/sts"
 	"github.com/stretchr/testify/assert"
-
-	mock "github.com/Aton-Kish/aws-credscache-go/internal/mock/github.com/aws/aws-sdk-go-v2/credentials/stscreds"
 )
 
 func TestNewCredentialsCacheUnsafeAccessor(t *testing.T) {
 	type args struct {
-		credsCache *aws.CredentialsCache
+		ptr *aws.CredentialsCache
 	}
 
 	type expected struct {
-		res CredentialsCacheUnsafeAccessor
+		res *CredentialsCacheUnsafeAccessor
 		err error
 	}
 
@@ -52,27 +48,27 @@ func TestNewCredentialsCacheUnsafeAccessor(t *testing.T) {
 		{
 			name: "positive case: CredentialsCache with valid provider",
 			args: args{
-				credsCache: aws.NewCredentialsCache(&stscreds.AssumeRoleProvider{}),
+				ptr: aws.NewCredentialsCache(&stscreds.AssumeRoleProvider{}),
 			},
 			expected: expected{
-				res: &credentialsCacheUnsafeAccessor{ptr: aws.NewCredentialsCache(&stscreds.AssumeRoleProvider{})},
+				res: &CredentialsCacheUnsafeAccessor{ptr: aws.NewCredentialsCache(&stscreds.AssumeRoleProvider{})},
 				err: nil,
 			},
 		},
 		{
 			name: "positive case: CredentialsCache with nil provider",
 			args: args{
-				credsCache: aws.NewCredentialsCache(nil),
+				ptr: aws.NewCredentialsCache(nil),
 			},
 			expected: expected{
-				res: &credentialsCacheUnsafeAccessor{ptr: aws.NewCredentialsCache(nil)},
+				res: &CredentialsCacheUnsafeAccessor{ptr: aws.NewCredentialsCache(nil)},
 				err: nil,
 			},
 		},
 		{
 			name: "negative case: nil CredentialsCache",
 			args: args{
-				credsCache: nil,
+				ptr: nil,
 			},
 			expected: expected{
 				res: nil,
@@ -83,7 +79,7 @@ func TestNewCredentialsCacheUnsafeAccessor(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual, err := NewCredentialsCacheUnsafeAccessor(tt.args.credsCache)
+			actual, err := NewCredentialsCacheUnsafeAccessor(tt.args.ptr)
 
 			if tt.expected.err == nil {
 				assert.NoError(t, err)
@@ -96,26 +92,26 @@ func TestNewCredentialsCacheUnsafeAccessor(t *testing.T) {
 	}
 }
 
-func Test_credentialsCacheUnsafeAccessor_Provider(t *testing.T) {
+func TestCredentialsCacheUnsafeAccessor_Provider(t *testing.T) {
 	type expected struct {
 		res aws.CredentialsProvider
 	}
 
 	tests := []struct {
 		name     string
-		accessor *credentialsCacheUnsafeAccessor
+		accessor *CredentialsCacheUnsafeAccessor
 		expected expected
 	}{
 		{
 			name:     "positive case: get valid provider",
-			accessor: &credentialsCacheUnsafeAccessor{ptr: aws.NewCredentialsCache(&stscreds.AssumeRoleProvider{})},
+			accessor: &CredentialsCacheUnsafeAccessor{ptr: aws.NewCredentialsCache(&stscreds.AssumeRoleProvider{})},
 			expected: expected{
 				res: &stscreds.AssumeRoleProvider{},
 			},
 		},
 		{
 			name:     "positive case: get nil provider",
-			accessor: &credentialsCacheUnsafeAccessor{ptr: aws.NewCredentialsCache(nil)},
+			accessor: &CredentialsCacheUnsafeAccessor{ptr: aws.NewCredentialsCache(nil)},
 			expected: expected{
 				res: nil,
 			},
@@ -131,20 +127,20 @@ func Test_credentialsCacheUnsafeAccessor_Provider(t *testing.T) {
 	}
 }
 
-func Test_credentialsCacheUnsafeAccessor_SetProvider(t *testing.T) {
+func TestCredentialsCacheUnsafeAccessor_SetProvider(t *testing.T) {
 	tests := []struct {
 		name     string
-		accessor *credentialsCacheUnsafeAccessor
+		accessor *CredentialsCacheUnsafeAccessor
 		provider aws.CredentialsProvider
 	}{
 		{
 			name:     "positive case: set valid provider",
-			accessor: &credentialsCacheUnsafeAccessor{ptr: aws.NewCredentialsCache(&stscreds.AssumeRoleProvider{})},
+			accessor: &CredentialsCacheUnsafeAccessor{ptr: aws.NewCredentialsCache(&stscreds.AssumeRoleProvider{})},
 			provider: &credentials.StaticCredentialsProvider{},
 		},
 		{
 			name:     "positive case: set nil provider",
-			accessor: &credentialsCacheUnsafeAccessor{ptr: aws.NewCredentialsCache(&stscreds.AssumeRoleProvider{})},
+			accessor: &CredentialsCacheUnsafeAccessor{ptr: aws.NewCredentialsCache(&stscreds.AssumeRoleProvider{})},
 			provider: nil,
 		},
 	}
@@ -160,11 +156,11 @@ func Test_credentialsCacheUnsafeAccessor_SetProvider(t *testing.T) {
 
 func TestNewAssumeRoleProviderUnsafeAccessor(t *testing.T) {
 	type args struct {
-		provider *stscreds.AssumeRoleProvider
+		ptr *stscreds.AssumeRoleProvider
 	}
 
 	type expected struct {
-		res AssumeRoleProviderUnsafeAccessor
+		res *AssumeRoleProviderUnsafeAccessor
 		err error
 	}
 
@@ -176,17 +172,17 @@ func TestNewAssumeRoleProviderUnsafeAccessor(t *testing.T) {
 		{
 			name: "positive case: AssumeRoleProvider",
 			args: args{
-				provider: &stscreds.AssumeRoleProvider{},
+				ptr: &stscreds.AssumeRoleProvider{},
 			},
 			expected: expected{
-				res: &assumeRoleProviderUnsafeAccessor{ptr: &stscreds.AssumeRoleProvider{}},
+				res: &AssumeRoleProviderUnsafeAccessor{ptr: &stscreds.AssumeRoleProvider{}},
 				err: nil,
 			},
 		},
 		{
 			name: "negative case: nil AssumeRoleProvider",
 			args: args{
-				provider: nil,
+				ptr: nil,
 			},
 			expected: expected{
 				res: nil,
@@ -197,7 +193,7 @@ func TestNewAssumeRoleProviderUnsafeAccessor(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual, err := NewAssumeRoleProviderUnsafeAccessor(tt.args.provider)
+			actual, err := NewAssumeRoleProviderUnsafeAccessor(tt.args.ptr)
 
 			if tt.expected.err == nil {
 				assert.NoError(t, err)
@@ -210,39 +206,34 @@ func TestNewAssumeRoleProviderUnsafeAccessor(t *testing.T) {
 	}
 }
 
-func Test_assumeRoleProviderUnsafeAccessor_Options(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockAssumeRoleAPIClient := mock.NewMockAssumeRoleAPIClient(ctrl)
-
+func TestAssumeRoleProviderUnsafeAccessor_Options(t *testing.T) {
 	type expected struct {
 		res stscreds.AssumeRoleOptions
 	}
 
 	tests := []struct {
 		name     string
-		accessor *assumeRoleProviderUnsafeAccessor
+		accessor *AssumeRoleProviderUnsafeAccessor
 		expected expected
 	}{
 		{
 			name:     "positive case: get basic option",
-			accessor: &assumeRoleProviderUnsafeAccessor{ptr: stscreds.NewAssumeRoleProvider(mockAssumeRoleAPIClient, "role_arn")},
+			accessor: &AssumeRoleProviderUnsafeAccessor{ptr: stscreds.NewAssumeRoleProvider(&sts.Client{}, "role_arn")},
 			expected: expected{
 				res: stscreds.AssumeRoleOptions{
-					Client:  mockAssumeRoleAPIClient,
+					Client:  &sts.Client{},
 					RoleARN: "role_arn",
 				},
 			},
 		},
 		{
 			name: "positive case: get option with role session name",
-			accessor: &assumeRoleProviderUnsafeAccessor{ptr: stscreds.NewAssumeRoleProvider(mockAssumeRoleAPIClient, "role_arn", func(o *stscreds.AssumeRoleOptions) {
+			accessor: &AssumeRoleProviderUnsafeAccessor{ptr: stscreds.NewAssumeRoleProvider(&sts.Client{}, "role_arn", func(o *stscreds.AssumeRoleOptions) {
 				o.RoleSessionName = "role_session_name"
 			})},
 			expected: expected{
 				res: stscreds.AssumeRoleOptions{
-					Client:          mockAssumeRoleAPIClient,
+					Client:          &sts.Client{},
 					RoleARN:         "role_arn",
 					RoleSessionName: "role_session_name",
 				},
@@ -250,7 +241,7 @@ func Test_assumeRoleProviderUnsafeAccessor_Options(t *testing.T) {
 		},
 		{
 			name:     "positive case: get empty option",
-			accessor: &assumeRoleProviderUnsafeAccessor{ptr: &stscreds.AssumeRoleProvider{}},
+			accessor: &AssumeRoleProviderUnsafeAccessor{ptr: &stscreds.AssumeRoleProvider{}},
 			expected: expected{
 				res: stscreds.AssumeRoleOptions{},
 			},

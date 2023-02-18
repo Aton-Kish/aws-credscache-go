@@ -23,18 +23,27 @@ package credscache
 import (
 	"testing"
 
-	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
-	"github.com/aws/aws-sdk-go-v2/service/sts"
+	mock "github.com/Aton-Kish/aws-credscache-go/internal/mock/github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestAssumeRoleCacheKey(t *testing.T) {
+func TestInjectFileCacheProvider(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockProviderWithContext := mock.NewMockProviderWithContext(ctrl)
+
 	type args struct {
-		provider *stscreds.AssumeRoleProvider
+		cfg    *aws.Config
+		optFns []func(o *FileCacheOptions)
 	}
 
 	type expected struct {
-		res string
+		res bool
 		err error
 	}
 
@@ -44,20 +53,49 @@ func TestAssumeRoleCacheKey(t *testing.T) {
 		expected expected
 	}{
 		{
-			name: "positive case: with RoleARN",
+			name: "positive case: succeeded to inject",
 			args: args{
-				provider: stscreds.NewAssumeRoleProvider(&sts.Client{}, "role_arn"),
+				cfg: &aws.Config{
+					Credentials: credentials.NewCredentials(&stscreds.AssumeRoleProvider{}),
+				},
+				optFns: []func(o *FileCacheOptions){},
 			},
 			expected: expected{
-				res: "de1969e7a880d858c9bef3ba110acf78869d4527",
+				res: true,
 				err: nil,
+			},
+		},
+		{
+			name: "positive case: failed to inject due to missing AssumeRoleProvider",
+			args: args{
+				cfg: &aws.Config{
+					Credentials: credentials.NewCredentials(mockProviderWithContext),
+				},
+				optFns: []func(o *FileCacheOptions){},
+			},
+			expected: expected{
+				res: false,
+				err: nil,
+			},
+		},
+		{
+			name: "negative case: nil credentials",
+			args: args{
+				cfg: &aws.Config{
+					Credentials: nil,
+				},
+				optFns: []func(o *FileCacheOptions){},
+			},
+			expected: expected{
+				res: false,
+				err: ErrNilPointer,
 			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual, err := AssumeRoleCacheKey(tt.args.provider)
+			actual, err := InjectFileCacheProvider(tt.args.cfg, tt.args.optFns...)
 
 			if tt.expected.err == nil {
 				assert.NoError(t, err)

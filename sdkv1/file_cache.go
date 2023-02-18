@@ -18,56 +18,43 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-package cmd
+package credscache
 
 import (
-	"encoding/json"
-	"fmt"
+	"time"
 
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
-	"github.com/aws/aws-sdk-go-v2/service/sts"
-	"github.com/spf13/cobra"
+	"github.com/Aton-Kish/aws-credscache-go/credscacheutil"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 )
 
-var nocacheCmd = &cobra.Command{
-	Use:   "nocache",
-	Short: "Call AWS API without the cached credentials",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		ctx := cmd.Context()
+func LoadCredentials(path string) (*credentials.Value, time.Time, error) {
+	cache := new(credscacheutil.FileCache)
+	if err := cache.Load(path); err != nil {
+		return nil, time.Time{}, err
+	}
 
-		loadOptFns := []func(o *config.LoadOptions) error{
-			config.WithAssumeRoleCredentialOptions(func(o *stscreds.AssumeRoleOptions) {
-				o.TokenProvider = stscreds.StdinTokenProvider
-			}),
-		}
+	creds := &credentials.Value{
+		AccessKeyID:     cache.Credentials.AccessKeyID,
+		SecretAccessKey: cache.Credentials.SecretAccessKey,
+		SessionToken:    cache.Credentials.SessionToken,
+	}
 
-		if profile != "" {
-			loadOptFns = append(loadOptFns, config.WithSharedConfigProfile(profile))
-		}
-
-		cfg, err := config.LoadDefaultConfig(ctx, loadOptFns...)
-		if err != nil {
-			return err
-		}
-
-		stsClient := sts.NewFromConfig(cfg)
-		output, err := stsClient.GetCallerIdentity(ctx, &sts.GetCallerIdentityInput{})
-		if err != nil {
-			return err
-		}
-
-		data, err := json.MarshalIndent(output, "", "  ")
-		if err != nil {
-			return err
-		}
-
-		fmt.Println(string(data))
-
-		return nil
-	},
+	return creds, cache.Credentials.Expires, nil
 }
 
-func init() {
-	rootCmd.AddCommand(nocacheCmd)
+func StoreCredentials(path string, creds *credentials.Value, expires time.Time) error {
+	cache := &credscacheutil.FileCache{
+		Credentials: credscacheutil.CachedCredentials{
+			AccessKeyID:     creds.AccessKeyID,
+			SecretAccessKey: creds.SecretAccessKey,
+			SessionToken:    creds.SessionToken,
+			Expires:         expires,
+		},
+	}
+
+	if err := cache.Store(path); err != nil {
+		return err
+	}
+
+	return nil
 }
