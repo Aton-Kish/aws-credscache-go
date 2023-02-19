@@ -59,7 +59,7 @@
 [5.45, "o", "\r\n"]
 [6.70, "o", "{\r\n    \"Account\": \"123456789012\",\r\n    \"Arn\": \"arn:aws:sts::123456789012:assumed-role/myrole/mysessionname\",\r\n    \"UserId\": \"AXXXXXXXXXXXXXXXXXXXX:mysessionname\"\r\n}\r\n"]
 [6.75, "o", "$ "]
-[7.75, "o", "go run main.go sdkv1 nocache --profile administrator"]
+[7.75, "o", "go run main.go sdkv1 nocache --profile myprofile"]
 [8.25, "o", "\r\n"]
 [8.60, "o", "Assume Role MFA token code: "]
 [9.10, "o", "7"]

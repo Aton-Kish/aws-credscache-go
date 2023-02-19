@@ -57,7 +57,7 @@
 [5.35, "o", "\r\n"]
 [6.60, "o", "{\r\n    \"Account\": \"123456789012\",\r\n    \"Arn\": \"arn:aws:sts::123456789012:assumed-role/myrole/mysessionname\",\r\n    \"UserId\": \"AXXXXXXXXXXXXXXXXXXXX:mysessionname\",\r\n    \"ResultMetadata\": {}\r\n}\r\n"]
 [6.65, "o", "$ "]
-[7.65, "o", "go run main.go sdkv2 cache --profile administrator"]
+[7.65, "o", "go run main.go sdkv2 cache --profile myprofile"]
 [8.15, "o", "\r\n"]
 [9.40, "o", "{\r\n    \"Account\": \"123456789012\",\r\n    \"Arn\": \"arn:aws:sts::123456789012:assumed-role/myrole/mysessionname\",\r\n    \"UserId\": \"AXXXXXXXXXXXXXXXXXXXX:mysessionname\",\r\n    \"ResultMetadata\": {}\r\n}\r\n"]
 [9.45, "o", "$ "]
