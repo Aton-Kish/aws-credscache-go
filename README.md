@@ -9,14 +9,14 @@ However, it doesn't work effectively for use cases of the short-lifespan process
 
 ![nocache](./_examples/cli/images/gif/sdkv2_nocache.gif)  
 An MFA token code will be requested every time.
+It's very bothering.
 
 Although the AWS CLI saves credentials into `$HOME/.aws/cli/cache`, the AWS SDK does not support it.
 This module provides an easy way to apply a file-caching feature that has compatibility with the AWS CLI.
 
 ![cache](./_examples/cli/images/gif/sdkv2_cache.gif)  
-An MFA token code will be requested only once.  
 ![cache shared with AWS CLI](./_examples/cli/images/gif/sdkv2_cache_awscli.gif)  
-You can also share the cache with the AWS CLI.
+You will input an MFA token code only once and can also share the cache with the AWS CLI.
 
 See [exmples](./_examples/) for more details.
 
