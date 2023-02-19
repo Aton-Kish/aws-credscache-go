@@ -1,6 +1,24 @@
 # AWS Credentials Cache for Go
 
-This module provides credentials caching utilities that are partially compatible with AWS CLI.
+This module provides credentials caching utilities that are compatible with the AWS CLI.
+
+## Motivation
+
+The AWS SDK has a feature of an in-memory cache for credentials.
+However, it doesn't work effectively for use cases of the short-lifespan process like CLI.
+
+![nocache](./_examples/cli/images/gif/sdkv2_nocache.gif)  
+An MFA token code will be requested every time.
+It's very bothering.
+
+Although the AWS CLI saves credentials into `$HOME/.aws/cli/cache`, the AWS SDK does not support it.
+This module provides an easy way to apply a file-caching feature that has compatibility with the AWS CLI.
+
+![cache](./_examples/cli/images/gif/sdkv2_cache.gif)  
+![cache shared with AWS CLI](./_examples/cli/images/gif/sdkv2_cache_awscli.gif)  
+You will input an MFA token code only once and can also share the cache with the AWS CLI.
+
+See [exmples](./_examples/) for more details.
 
 ## Installation
 
