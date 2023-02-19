@@ -4,8 +4,8 @@ This module provides credentials caching utilities that are compatible with the 
 
 ## Motivation
 
-The AWS SDK has a feature of an in-memory cache for credentials.
-However, it doesn't work effectively for use cases of the short-lifespan process like CLI.
+The AWS SDK has an in-memory caching feature for credentials.
+However, it doesn't work effectively for short-lifespan processes like CLI.
 
 ![nocache](./_examples/cli/images/gif/sdkv2_nocache.gif)  
 An MFA token code will be requested every time.
