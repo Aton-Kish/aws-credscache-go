@@ -1,5 +1,9 @@
 # AWS Credentials Cache for Go
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/Aton-Kish/aws-credscache-go.svg)](https://pkg.go.dev/github.com/Aton-Kish/aws-credscache-go)
+[![Go Report Card](https://goreportcard.com/badge/github.com/Aton-Kish/aws-credscache-go)](https://goreportcard.com/report/github.com/Aton-Kish/aws-credscache-go)
+[![MIT License](https://img.shields.io/github/license/Aton-Kish/aws-credscache-go)](./LICENSE)
+
 This module provides credentials caching utilities that are compatible with the AWS CLI.
 
 ## Motivation
