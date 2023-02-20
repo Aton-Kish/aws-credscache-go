@@ -1,5 +1,9 @@
 # AWS Credentials Cache for Go
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/Aton-Kish/aws-credscache-go.svg)](https://pkg.go.dev/github.com/Aton-Kish/aws-credscache-go)
+[![Go Report Card](https://goreportcard.com/badge/github.com/Aton-Kish/aws-credscache-go)](https://goreportcard.com/report/github.com/Aton-Kish/aws-credscache-go)
+[![MIT License](https://img.shields.io/github/license/Aton-Kish/aws-credscache-go)](./LICENSE)
+
 This module provides credentials caching utilities that are compatible with the AWS CLI.
 
 ## Motivation
@@ -59,6 +63,23 @@ func main() {
 
 See [exmples](./_examples/) for more details.
 
+## Compatibility with the AWS CLI
+
+### Assume Role
+
+The AWS CLI stores the temporary credentials in `$HOME/.aws/cli/cache`.
+A cache file name is computed by the SHA-1 hash of the JSON-stringified options of the Assume Role API.
+This module partially supports cache key generators compatible with the AWS CLI.
+
+| Assume Role options | key in `$HOME/.aws/config` | compatible                                          |
+| ------------------- | -------------------------- | --------------------------------------------------- |
+| RoleArn             | `role_arn`                 | &#x2713;                                            |
+| RoleSessionName     | `role_session_name`        | &#x2713;                                            |
+| ExternalID          | `external_id`              | &#x2713;                                            |
+| SerialNumber        | `mfa_serial`               | &#x2713;                                            |
+| Duration            | `duration_seconds`         | &#x2715; (less than 960 seconds)<br>&#x2713; (else) |
+| Policy              | N/A                        | &#x2715;                                            |
+
 ## Development
 
 ### Setup
@@ -83,7 +104,7 @@ go test ./...
 go test -v ./...
 ```
 
-### Doc
+### Docs
 
 ```shell
 go run golang.org/x/tools/cmd/godoc@latest -http ":6060"
