@@ -83,7 +83,7 @@ go test ./...
 go test -v ./...
 ```
 
-### Doc
+### Docs
 
 ```shell
 go run golang.org/x/tools/cmd/godoc@latest -http ":6060"
