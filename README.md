@@ -63,6 +63,23 @@ func main() {
 
 See [exmples](./_examples/) for more details.
 
+## Compatibility with the AWS CLI
+
+### Assume Role
+
+The AWS CLI stores the temporary credentials in `$HOME/.aws/cli/cache`.
+A cache file name is computed by the SHA-1 hash of the JSON-stringified options of the Assume Role API.
+This module partially supports cache key generators compatible with the AWS CLI.
+
+| Assume Role options | key in `$HOME/.aws/config` | compatible                                          |
+| ------------------- | -------------------------- | --------------------------------------------------- |
+| RoleArn             | `role_arn`                 | &#x2713;                                            |
+| RoleSessionName     | `role_session_name`        | &#x2713;                                            |
+| ExternalID          | `external_id`              | &#x2713;                                            |
+| SerialNumber        | `mfa_serial`               | &#x2713;                                            |
+| Duration            | `duration_seconds`         | &#x2715; (less than 960 seconds)<br>&#x2713; (else) |
+| Policy              | N/A                        | &#x2715;                                            |
+
 ## Development
 
 ### Setup
